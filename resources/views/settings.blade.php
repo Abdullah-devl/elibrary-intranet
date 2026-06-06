@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إعدادات المكتبة الإلكترونية</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '{{ $settings->color_primary }}',
+                        accent: '{{ $settings->color_accent }}',
+                        bglight: '{{ $settings->color_bglight }}'
+                    },
+                    fontFamily: {
+                        sans: ['Cairo', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-bglight text-slate-800 antialiased min-h-screen pb-12">
+
+    <!-- Navbar -->
+    <nav class="bg-primary text-white shadow-lg transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+            <div class="text-xl sm:text-2xl font-bold flex items-center gap-2 sm:gap-3 truncate max-w-[50%]">
+                @if($settings->logo_type === 'image' && $settings->logo_path)
+                    <img id="nav-logo-img" src="{{ asset($settings->logo_path) }}" alt="Logo" class="h-8 sm:h-9 w-auto object-contain flex-shrink-0">
+                @else
+                    <i id="nav-logo-icon" class="{{ $settings->logo_icon }} text-accent flex-shrink-0"></i>
+                @endif
+                <span id="nav-title" class="truncate">{{ $settings->name }}</span>
+            </div>
+            <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                <a href="{{ url('/library') }}" class="bg-white/10 hover:bg-white/20 text-white p-2 sm:px-4 sm:py-2 rounded-lg transition duration-300 text-sm flex items-center gap-2" title="العودة للمكتبة">
+                    <i class="fa-solid fa-arrow-left"></i> <span class="hidden sm:inline">العودة للمكتبة</span>
+                </a>
+                <form action="{{ route('settings.logout') }}" method="POST" class="m-0">
+                    @csrf
+                    <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white p-2 sm:px-3 sm:py-2 rounded-lg transition duration-300 text-sm flex items-center gap-2 font-bold" title="تسجيل الخروج">
+                        <i class="fa-solid fa-right-from-bracket"></i> <span class="hidden sm:inline">تسجيل الخروج</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 mt-8">
+        
+        <!-- Success Alert -->
+        @if(session('success'))
+            <div class="mb-6 p-4 bg-emerald-50 border-r-4 border-emerald-500 rounded-lg shadow-sm text-emerald-800 flex items-center gap-3">
+                <i class="fa-solid fa-circle-check text-xl"></i>
+                <span class="font-semibold">{{ session('success') }}</span>
+            </div>
+        @endif
+
+        <form action="{{ route('settings.update') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
+            @csrf
+
+            <!-- ================= القسم العلوي (كامل عرض الشاشة) ================= -->
+            <div class="space-y-6">
+                <!-- كارت معلومات المكتبة الأساسية والشعار والمسارات والأمان -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-6">
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-4">
+                        <i class="fa-solid fa-sliders text-accent"></i>
+                        تعديل إعدادات الهوية والمسارات والأمان للمكتبة
+                    </h2>
+
+                    <!-- اسم المكتبة والنص الترحيبي -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="name" class="block text-sm font-semibold text-slate-700 mb-2">اسم المكتبة الإلكترونية</label>
+                            <input type="text" name="name" id="name" value="{{ $settings->name }}" required
+                                class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none transition duration-200">
+                        </div>
+                        <div>
+                            <label for="welcome_text" class="block text-sm font-semibold text-slate-700 mb-2">النص الترحيبي لزوار المكتبة (الصفحة الرئيسية)</label>
+                            <textarea name="welcome_text" id="welcome_text" rows="2" required
+                                class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none transition duration-200 text-sm">{{ $settings->welcome_text ?? '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- مسارات ملفات السيرفر -->
+                    <div class="bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
+                        <h3 class="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-server text-accent"></i> مسارات ملفات السيرفر
+                        </h3>
+                        <div class="text-xs text-amber-700 mb-4 bg-amber-50 p-3 rounded-lg border border-amber-100 flex items-start gap-2">
+                            <i class="fa-solid fa-triangle-exclamation mt-0.5 text-sm flex-shrink-0"></i>
+                            <span><strong>ملاحظة هامة:</strong> حدد المسار الكامل للمجلد على السيرفر (مثل <code>D:\my-files</code> أو <code>D:\library\videos</code>). يدعم النظام المسارات المطلقة من أي مكان على القرص الصلب لتسهيل نقل المشروع وتوافقه مع السيرفر.</span>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="path_videos" class="block text-xs font-semibold text-slate-600 mb-1.5">مسار مجلد الفيديوهات</label>
+                                <input type="text" name="path_videos" id="path_videos" value="{{ $settings->path_videos ?? '' }}" required
+                                    class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none text-xs transition duration-200 font-mono">
+                                @if(isset($pathsStatus))
+                                    <div class="mt-1.5 flex items-center gap-1.5 text-xs font-semibold {{ $pathsStatus['videos'] ? 'text-emerald-600' : 'text-rose-500' }}">
+                                        @if($pathsStatus['videos'])
+                                            <i class="fa-solid fa-circle-check"></i> <span>المسار الفعلي المكتشف موجود وصالح للعمل</span>
+                                        @else
+                                            <i class="fa-solid fa-triangle-exclamation"></i> <span>المسار الفعلي المكتشف غير موجود حالياً (تأكد من صحة وجود المسار)</span>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                            <div>
+                                <label for="path_books" class="block text-xs font-semibold text-slate-600 mb-1.5">مسار مجلد الكتب والمراجع</label>
+                                <input type="text" name="path_books" id="path_books" value="{{ $settings->path_books ?? '' }}" required
+                                    class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none text-xs transition duration-200 font-mono">
+                                @if(isset($pathsStatus))
+                                    <div class="mt-1.5 flex items-center gap-1.5 text-xs font-semibold {{ $pathsStatus['books'] ? 'text-emerald-600' : 'text-rose-500' }}">
+                                        @if($pathsStatus['books'])
+                                            <i class="fa-solid fa-circle-check"></i> <span>المسار الفعلي المكتشف موجود وصالح للعمل</span>
+                                        @else
+                                            <i class="fa-solid fa-triangle-exclamation"></i> <span>المسار الفعلي المكتشف غير موجود حالياً (تأكد من صحة وجود المسار)</span>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                            <div>
+                                <label for="path_programs" class="block text-xs font-semibold text-slate-600 mb-1.5">مسار مجلد البرامج والأدوات</label>
+                                <input type="text" name="path_programs" id="path_programs" value="{{ $settings->path_programs ?? '' }}" required
+                                    class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none text-xs transition duration-200 font-mono">
+                                @if(isset($pathsStatus))
+                                    <div class="mt-1.5 flex items-center gap-1.5 text-xs font-semibold {{ $pathsStatus['programs'] ? 'text-emerald-600' : 'text-rose-500' }}">
+                                        @if($pathsStatus['programs'])
+                                            <i class="fa-solid fa-circle-check"></i> <span>المسار الفعلي المكتشف موجود وصالح للعمل</span>
+                                        @else
+                                            <i class="fa-solid fa-triangle-exclamation"></i> <span>المسار الفعلي المكتشف غير موجود حالياً (تأكد من صحة وجود المسار)</span>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- حماية حساب المشرف -->
+                    <div class="bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
+                        <h3 class="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved text-accent"></i> حماية حساب المشرف
+                        </h3>
+                        <div class="text-xs text-slate-400 mb-4 bg-slate-100/50 p-2.5 rounded-lg">
+                            يمكنك تعديل البريد الإلكتروني للمشرف بحرية. لتعديل كلمة المرور، اكتب كلمة المرور الحالية ثم الجديدة وتأكيدها (أو اترك حقول كلمة المرور فارغة للاحتفاظ بكلمة المرور الحالية).
+                        </div>
+                        
+                        <div class="space-y-4 mb-4">
+                            <div>
+                                <label for="admin_email" class="block text-xs font-semibold text-slate-600 mb-1.5">البريد الإلكتروني للمشرف</label>
+                                <input type="email" name="admin_email" id="admin_email" value="{{ $settings->admin_email ?? 'admin@gmail.com' }}" required
+                                    class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none text-xs transition duration-200 font-mono">
+                                @error('admin_email')
+                                    <p class="text-rose-500 text-xs mt-1 font-semibold"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label for="current_password" class="block text-xs font-semibold text-slate-600 mb-1.5">كلمة المرور الحالية</label>
+                                <input type="password" name="current_password" id="current_password" autocomplete="current-password" placeholder="••••••••"
+                                    class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none text-xs transition duration-200 font-mono">
+                                @error('current_password')
+                                    <p class="text-rose-500 text-xs mt-1 font-semibold"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="new_password" class="block text-xs font-semibold text-slate-600 mb-1.5">كلمة المرور الجديدة</label>
+                                    <input type="password" name="new_password" id="new_password" autocomplete="new-password" placeholder="••••••••"
+                                        class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none text-xs transition duration-200 font-mono">
+                                    @error('new_password')
+                                        <p class="text-rose-500 text-xs mt-1 font-semibold"><i class="fa-solid fa-circle-exclamation"></i> {{ $message }}</p>
+                                @enderror
+                                </div>
+                                <div>
+                                    <label for="new_password_confirmation" class="block text-xs font-semibold text-slate-600 mb-1.5">تأكيد كلمة المرور الجديدة</label>
+                                    <input type="password" name="new_password_confirmation" id="new_password_confirmation" autocomplete="new-password" placeholder="••••••••"
+                                        class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none text-xs transition duration-200 font-mono">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- شعار المكتبة -->
+                    <div class="bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
+                        <h3 class="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-image text-accent"></i> شعار المكتبة
+                        </h3>
+
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <label class="border-2 border-slate-200 rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:border-accent transition duration-200" id="label-logo-icon">
+                                <input type="radio" name="logo_type" value="icon" class="text-accent focus:ring-accent" {{ $settings->logo_type == 'icon' ? 'checked' : '' }}>
+                                <div>
+                                    <div class="font-bold text-sm text-slate-700">أيقونة جاهزة</div>
+                                    <div class="text-xs text-slate-400">اختر رمز FontAwesome</div>
+                                </div>
+                            </label>
+                            
+                            <label class="border-2 border-slate-200 rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:border-accent transition duration-200" id="label-logo-image">
+                                <input type="radio" name="logo_type" value="image" class="text-accent focus:ring-accent" {{ $settings->logo_type == 'image' ? 'checked' : '' }}>
+                                <div>
+                                    <div class="font-bold text-sm text-slate-700">صورة مخصصة</div>
+                                    <div class="text-xs text-slate-400">ارفع شعار خاص بالمكتبة</div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Icon Input -->
+                        <div id="icon-input-group" class="{{ $settings->logo_type == 'image' ? 'hidden' : '' }} space-y-3">
+                            <label for="logo_icon" class="block text-sm font-semibold text-slate-700">رمز الأيقونة (FontAwesome class)</label>
+                            <div class="relative">
+                                <input type="text" name="logo_icon" id="logo_icon" value="{{ $settings->logo_icon ?: 'fa-solid fa-graduation-cap' }}"
+                                    class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none transition duration-200">
+                                <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">
+                                    <i id="logo-icon-indicator" class="{{ $settings->logo_icon ?: 'fa-solid fa-graduation-cap' }}"></i>
+                                </div>
+                            </div>
+                            <div class="text-xs text-slate-400">أمثلة: <code class="bg-slate-100 px-1 py-0.5 rounded">fa-solid fa-graduation-cap</code>، <code class="bg-slate-100 px-1 py-0.5 rounded">fa-solid fa-book-open</code>، <code class="bg-slate-100 px-1 py-0.5 rounded">fa-solid fa-school</code></div>
+                        </div>
+
+                        <!-- Image Input -->
+                        <div id="image-input-group" class="{{ $settings->logo_type == 'icon' ? 'hidden' : '' }} space-y-3">
+                            <label class="block text-sm font-semibold text-slate-700">ملف الشعار (صورة)</label>
+                            <div class="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-accent transition duration-200 relative cursor-pointer">
+                                <input type="file" name="logo_file" id="logo_file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer">
+                                <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 mb-2"></i>
+                                <p class="text-sm font-semibold text-slate-600">اضغط لرفع ملف أو اسحبه هنا</p>
+                                <p class="text-xs text-slate-400 mt-1">يدعم PNG, JPG, SVG (بحد أقصى 2 ميجابايت)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= القسم السفلي (تخصيص الألوان والمعاينة متقابلان) ================= -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                
+                <!-- لوحة الألوان (اليمين) -->
+                <div class="space-y-6">
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-6">
+                        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-4">
+                            <i class="fa-solid fa-palette text-accent"></i>
+                            تخصيص ألوان المكتبة
+                        </h2>
+
+                        <!-- Color Presets -->
+                        <div class="bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
+                            <h3 class="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-palette text-accent"></i> السمات اللونية الجاهزة
+                            </h3>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                <!-- Preset 1 -->
+                                <button type="button" class="theme-preset-btn p-3 bg-white border border-slate-200 rounded-xl flex flex-col gap-2 hover:border-slate-400 text-right transition"
+                                    data-primary="#1E293B" data-accent="#D97706" data-bglight="#F8FAFC">
+                                    <span class="font-bold text-xs text-slate-700">الكحلي الكلاسيكي</span>
+                                    <div class="flex gap-1.5 mt-1">
+                                        <span class="w-4 h-4 rounded-full" style="background-color: #1E293B"></span>
+                                        <span class="w-4 h-4 rounded-full" style="background-color: #D97706"></span>
+                                        <span class="w-4 h-4 rounded-full border border-slate-200" style="background-color: #F8FAFC"></span>
+                                    </div>
+                                </button>
+                                <!-- Preset 2 -->
+                                <button type="button" class="theme-preset-btn p-3 bg-white border border-slate-200 rounded-xl flex flex-col gap-2 hover:border-slate-400 text-right transition"
+                                    data-primary="#064E3B" data-accent="#10B981" data-bglight="#F0FDF4">
+                                    <span class="font-bold text-xs text-slate-700">الغابة الخضراء</span>
+                                    <div class="flex gap-1.5 mt-1">
+                                        <span class="w-4 h-4 rounded-full" style="background-color: #064E3B"></span>
+                                        <span class="w-4 h-4 rounded-full" style="background-color: #10B981"></span>
+                                        <span class="w-4 h-4 rounded-full border border-slate-200" style="background-color: #F0FDF4"></span>
+                                    </div>
+                                </button>
+                                <!-- Preset 3 -->
+                                <button type="button" class="theme-preset-btn p-3 bg-white border border-slate-200 rounded-xl flex flex-col gap-2 hover:border-slate-400 text-right transition"
+                                    data-primary="#0F172A" data-accent="#0284C7" data-bglight="#F0F9FF">
+                                    <span class="font-bold text-xs text-slate-700">أزرق المحيط</span>
+                                    <div class="flex gap-1.5 mt-1">
+                                        <span class="w-4 h-4 rounded-full" style="background-color: #0F172A"></span>
+                                        <span class="w-4 h-4 rounded-full" style="background-color: #0284C7"></span>
+                                        <span class="w-4 h-4 rounded-full border border-slate-200" style="background-color: #F0F9FF"></span>
+                                    </div>
+                                </button>
+                                <!-- Preset 4 -->
+                                <button type="button" class="theme-preset-btn p-3 bg-white border border-slate-200 rounded-xl flex flex-col gap-2 hover:border-slate-400 text-right transition"
+                                    data-primary="#3B0764" data-accent="#8B5CF6" data-bglight="#FAF5FF">
+                                    <span class="font-bold text-xs text-slate-700">البنفسجي الملكي</span>
+                                    <div class="flex gap-1.5 mt-1">
+                                        <span class="w-4 h-4 rounded-full" style="background-color: #3B0764"></span>
+                                        <span class="w-4 h-4 rounded-full" style="background-color: #8B5CF6"></span>
+                                        <span class="w-4 h-4 rounded-full border border-slate-200" style="background-color: #FAF5FF"></span>
+                                    </div>
+                                </button>
+                                <!-- Preset 5 -->
+                                <button type="button" class="theme-preset-btn p-3 bg-white border border-slate-200 rounded-xl flex flex-col gap-2 hover:border-slate-400 text-right transition"
+                                    data-primary="#450A0A" data-accent="#EF4444" data-bglight="#FEF2F2">
+                                    <span class="font-bold text-xs text-slate-700">الأحمر القرمزي</span>
+                                    <div class="flex gap-1.5 mt-1">
+                                        <span class="w-4 h-4 rounded-full" style="background-color: #450A0A"></span>
+                                        <span class="w-4 h-4 rounded-full" style="background-color: #EF4444"></span>
+                                        <span class="w-4 h-4 rounded-full border border-slate-200" style="background-color: #FEF2F2"></span>
+                                    </div>
+                                </button>
+                                <!-- Preset 6 -->
+                                <button type="button" class="theme-preset-btn p-3 bg-white border border-slate-200 rounded-xl flex flex-col gap-2 hover:border-slate-400 text-right transition"
+                                    data-primary="#0F172A" data-accent="#38BDF8" data-bglight="#1E293B">
+                                    <span class="font-bold text-xs text-slate-700">منتصف الليل (داكن)</span>
+                                    <div class="flex gap-1.5 mt-1">
+                                        <span class="w-4 h-4 rounded-full" style="background-color: #0F172A"></span>
+                                        <span class="w-4 h-4 rounded-full" style="background-color: #38BDF8"></span>
+                                        <span class="w-4 h-4 rounded-full border border-slate-700" style="background-color: #1E293B"></span>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Custom Colors -->
+                        <div class="bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
+                            <h3 class="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-sliders text-accent"></i> تخصيص الألوان يدوياً
+                            </h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label for="color_primary" class="block text-sm font-medium text-slate-600 mb-2">اللون الأساسي (Primary)</label>
+                                    <div class="flex gap-2">
+                                        <input type="color" id="picker_primary" value="{{ $settings->color_primary }}" class="w-10 h-10 rounded border border-slate-200 cursor-pointer">
+                                        <input type="text" name="color_primary" id="color_primary" value="{{ $settings->color_primary }}"
+                                            class="w-full px-3 py-1.5 text-sm rounded-lg border border-slate-200 uppercase outline-none focus:border-accent">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="color_accent" class="block text-sm font-medium text-slate-600 mb-2">اللون الفرعي/التمييز (Accent)</label>
+                                    <div class="flex gap-2">
+                                        <input type="color" id="picker_accent" value="{{ $settings->color_accent }}" class="w-10 h-10 rounded border border-slate-200 cursor-pointer">
+                                        <input type="text" name="color_accent" id="color_accent" value="{{ $settings->color_accent }}"
+                                            class="w-full px-3 py-1.5 text-sm rounded-lg border border-slate-200 uppercase outline-none focus:border-accent">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="color_bglight" class="block text-sm font-medium text-slate-600 mb-2">لون الخلفية (Background)</label>
+                                    <div class="flex gap-2">
+                                        <input type="color" id="picker_bglight" value="{{ $settings->color_bglight }}" class="w-10 h-10 rounded border border-slate-200 cursor-pointer">
+                                        <input type="text" name="color_bglight" id="color_bglight" value="{{ $settings->color_bglight }}"
+                                            class="w-full px-3 py-1.5 text-sm rounded-lg border border-slate-200 uppercase outline-none focus:border-accent">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Preview Column -->
+                <div class="lg:col-span-1">
+                    <div class="sticky top-6 space-y-4">
+                        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-eye text-slate-400"></i> معاينة مباشرة سريعة
+                        </h3>
+                        
+                        <!-- Preview Box -->
+                        <div id="preview-container" class="rounded-2xl border border-slate-200/60 shadow-lg overflow-hidden transition-all duration-300 bg-white">
+                            
+                            <!-- Simulated Header -->
+                            <div id="preview-header" class="px-4 py-3 text-white flex justify-between items-center transition-colors duration-300">
+                                <div class="font-bold text-sm flex items-center gap-2">
+                                    <!-- Preview Image logo -->
+                                    <img id="preview-logo-img" src="{{ $settings->logo_path ? asset($settings->logo_path) : '' }}" class="h-6 w-auto object-contain {{ ($settings->logo_type == 'image' && $settings->logo_path) ? '' : 'hidden' }}">
+                                    <!-- Preview Icon logo -->
+                                    <i id="preview-logo-icon" class="{{ $settings->logo_icon }} text-lg transition-colors duration-300 {{ $settings->logo_type == 'icon' ? '' : 'hidden' }}"></i>
+                                    <span id="preview-title" class="truncate max-w-[150px]">{{ $settings->name }}</span>
+                                </div>
+                                <div class="text-[10px] opacity-75">
+                                    <i class="fa-solid fa-wifi text-emerald-400"></i> متصل
+                                </div>
+                            </div>
+
+                            <!-- Simulated Body -->
+                            <div id="preview-body" class="p-4 space-y-4 min-h-[300px] transition-colors duration-300" style="background-color: {{ $settings->color_bglight }}">
+                                
+                                <!-- Breadcrumb & back button -->
+                                <div class="bg-white rounded-lg p-2.5 shadow-sm border border-slate-100 flex justify-between items-center text-xs">
+                                    <div class="font-medium text-slate-500 flex items-center gap-1.5">
+                                        <i id="preview-breadcrumb-icon" class="fa-solid fa-folder-open"></i>
+                                        <span>المكتبة الرئيسية</span>
+                                    </div>
+                                    <span id="preview-back-btn" class="px-2 py-1 rounded text-[10px] text-white font-semibold flex items-center gap-1 transition-all duration-300">
+                                        <i class="fa-solid fa-arrow-right"></i> عودة
+                                    </span>
+                                </div>
+
+                                <!-- Folder section -->
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1">
+                                        <i class="fa-solid fa-layer-group text-[10px]"></i> الأقسام والتخصصات
+                                    </h4>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <!-- Folder Item -->
+                                        <div class="bg-white border border-slate-200/80 rounded-lg p-2 flex flex-col items-center justify-center gap-1 shadow-sm">
+                                            <i id="preview-folder-icon-1" class="fa-solid fa-folder text-lg"></i>
+                                            <span class="text-[9px] font-bold text-slate-600">قسم البرمجة</span>
+                                        </div>
+                                        <div class="bg-white border border-slate-200/80 rounded-lg p-2 flex flex-col items-center justify-center gap-1 shadow-sm">
+                                            <i id="preview-folder-icon-2" class="fa-solid fa-folder text-lg"></i>
+                                            <span class="text-[9px] font-bold text-slate-600">قسم التصميم</span>
+                                        </div>
+                                        <div class="bg-white border border-slate-200/80 rounded-lg p-2 flex flex-col items-center justify-center gap-1 shadow-sm border-dashed">
+                                            <i id="preview-folder-icon-3" class="fa-solid fa-folder-plus text-lg opacity-40"></i>
+                                            <span class="text-[9px] font-bold text-slate-400">إضافة قسم</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Video section -->
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1">
+                                        <i class="fa-solid fa-film text-[10px]"></i> المحاضرات المرئية
+                                    </h4>
+                                    <div class="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
+                                        <div class="aspect-video w-full bg-slate-900 flex items-center justify-center relative">
+                                            <i class="fa-solid fa-circle-play text-white/40 text-2xl"></i>
+                                            <div class="absolute bottom-1 right-1 bg-black/60 text-[8px] text-white px-1 rounded">10:45</div>
+                                        </div>
+                                        <div class="p-2 flex justify-between items-center text-[10px]">
+                                            <span class="font-bold text-slate-700 truncate w-3/4">محاضرة مقدمة الحاسب</span>
+                                            <i class="fa-solid fa-download text-slate-400"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- زر حفظ الإعدادات -->
+            <div class="flex justify-end pt-6 border-t border-slate-200/60">
+                <button type="submit" class="w-full sm:w-auto px-8 py-3.5 bg-primary hover:opacity-95 text-white font-bold rounded-xl shadow-lg transition duration-200 flex items-center justify-center gap-2 text-base">
+                    <i class="fa-solid fa-floppy-disk text-lg"></i>
+                    حفظ التغييرات وإعادة التحميل
+                </button>
+            </div>
+
+        </form>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const nameInput = document.getElementById('name');
+            const logoTypeRadios = document.querySelectorAll('input[name="logo_type"]');
+            const logoIconInput = document.getElementById('logo_icon');
+            const logoFileInput = document.getElementById('logo_file');
+            const colorPrimaryInput = document.getElementById('color_primary');
+            const colorAccentInput = document.getElementById('color_accent');
+            const colorBglightInput = document.getElementById('color_bglight');
+            
+            const pickerPrimary = document.getElementById('picker_primary');
+            const pickerAccent = document.getElementById('picker_accent');
+            const pickerBglight = document.getElementById('picker_bglight');
+            
+            const iconInputGroup = document.getElementById('icon-input-group');
+            const imageInputGroup = document.getElementById('image-input-group');
+            const logoIconIndicator = document.getElementById('logo-icon-indicator');
+
+            // Preview elements
+            const navTitle = document.getElementById('nav-title');
+            const navLogoIcon = document.getElementById('nav-logo-icon');
+            const navLogoImg = document.getElementById('nav-logo-img');
+            
+            const previewTitle = document.getElementById('preview-title');
+            const previewLogoIcon = document.getElementById('preview-logo-icon');
+            const previewLogoImg = document.getElementById('preview-logo-img');
+            const previewHeader = document.getElementById('preview-header');
+            const previewBody = document.getElementById('preview-body');
+            const previewBackBtn = document.getElementById('preview-back-btn');
+            
+            const previewFolderIcon1 = document.getElementById('preview-folder-icon-1');
+            const previewFolderIcon2 = document.getElementById('preview-folder-icon-2');
+            const previewFolderIcon3 = document.getElementById('preview-folder-icon-3');
+
+            // Theme preset buttons
+            const themePresetBtns = document.querySelectorAll('.theme-preset-btn');
+
+            // Function to update preview colors
+            function updateColors() {
+                const primaryColor = colorPrimaryInput.value;
+                const accentColor = colorAccentInput.value;
+                const bglightColor = colorBglightInput.value;
+
+                // Sync pickers
+                pickerPrimary.value = primaryColor;
+                pickerAccent.value = accentColor;
+                pickerBglight.value = bglightColor;
+
+                // Update preview elements
+                previewHeader.style.backgroundColor = primaryColor;
+                previewBody.style.backgroundColor = bglightColor;
+                previewBackBtn.style.backgroundColor = primaryColor;
+                
+                // Color primary elements
+                // Accent colors
+                previewLogoIcon.style.color = accentColor;
+                if (navLogoIcon) navLogoIcon.style.color = accentColor;
+                
+                previewFolderIcon1.style.color = accentColor;
+                previewFolderIcon2.style.color = accentColor;
+            }
+
+            // Sync color picker -> text input
+            pickerPrimary.addEventListener('input', function() {
+                colorPrimaryInput.value = pickerPrimary.value.toUpperCase();
+                updateColors();
+            });
+            pickerAccent.addEventListener('input', function() {
+                colorAccentInput.value = pickerAccent.value.toUpperCase();
+                updateColors();
+            });
+            pickerBglight.addEventListener('input', function() {
+                colorBglightInput.value = pickerBglight.value.toUpperCase();
+                updateColors();
+            });
+
+            // Sync text input -> color picker
+            colorPrimaryInput.addEventListener('input', function() {
+                if(/^#[0-9A-F]{6}$/i.test(colorPrimaryInput.value)) {
+                    updateColors();
+                }
+            });
+            colorAccentInput.addEventListener('input', function() {
+                if(/^#[0-9A-F]{6}$/i.test(colorAccentInput.value)) {
+                    updateColors();
+                }
+            });
+            colorBglightInput.addEventListener('input', function() {
+                if(/^#[0-9A-F]{6}$/i.test(colorBglightInput.value)) {
+                    updateColors();
+                }
+            });
+
+            // Name live update
+            nameInput.addEventListener('input', function() {
+                navTitle.textContent = nameInput.value;
+                previewTitle.textContent = nameInput.value;
+            });
+
+            // Logo Type selection
+            logoTypeRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'icon') {
+                        iconInputGroup.classList.remove('hidden');
+                        imageInputGroup.classList.add('hidden');
+                        
+                        previewLogoIcon.classList.remove('hidden');
+                        previewLogoImg.classList.add('hidden');
+                        
+                        if(navLogoIcon) navLogoIcon.classList.remove('hidden');
+                        if(navLogoImg) navLogoImg.classList.add('hidden');
+                    } else {
+                        iconInputGroup.classList.add('hidden');
+                        imageInputGroup.classList.remove('hidden');
+                        
+                        previewLogoIcon.classList.add('hidden');
+                        previewLogoImg.classList.remove('hidden');
+                        
+                        if(navLogoIcon) navLogoIcon.classList.add('hidden');
+                        if(navLogoImg) navLogoImg.classList.remove('hidden');
+                    }
+                });
+            });
+
+            // Icon class live update
+            logoIconInput.addEventListener('input', function() {
+                const iconClass = logoIconInput.value || 'fa-solid fa-graduation-cap';
+                
+                // Update indicator in input field
+                logoIconIndicator.className = iconClass;
+                
+                // Update preview logo
+                previewLogoIcon.className = iconClass + ' text-lg transition-colors duration-300';
+                if (navLogoIcon) navLogoIcon.className = iconClass + ' text-accent';
+            });
+
+            // Logo file image preview
+            logoFileInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewLogoImg.src = e.target.result;
+                        previewLogoImg.classList.remove('hidden');
+                        
+                        if (navLogoImg) {
+                            navLogoImg.src = e.target.result;
+                            navLogoImg.classList.remove('hidden');
+                        }
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Preset theme buttons click handler
+            themePresetBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const primary = this.dataset.primary;
+                    const accent = this.dataset.accent;
+                    const bglight = this.dataset.bglight;
+
+                    colorPrimaryInput.value = primary;
+                    colorAccentInput.value = accent;
+                    colorBglightInput.value = bglight;
+
+                    updateColors();
+                });
+            });
+
+            // Initial trigger
+            updateColors();
+        });
+    </script>
+</body>
+</html>
