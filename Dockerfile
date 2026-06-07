@@ -14,6 +14,9 @@ WORKDIR /var/www/html
 # Copy all application files
 COPY . .
 
+# Copy custom Nginx configuration
+COPY conf/nginx/nginx-site.conf /etc/nginx/sites-available/default.conf
+
 # Copy built assets from builder stage
 COPY --from=assets-builder /app/public/build ./public/build
 
