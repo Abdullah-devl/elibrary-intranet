@@ -9,32 +9,55 @@ class LibraryController extends Controller
 {
     public function index(Request $request)
     {
-        // 1. تحديد نوع القسم النشط (فيديو، كتب، برامج)
-        $type = $request->query('type', 'videos');
-        if (!in_array($type, ['videos', 'books', 'programs'])) {
-            $type = 'videos';
-        }
-
-        // 2. قراءة إعدادات المسارات من ملف الإعدادات
+        // 1. قراءة إعدادات المسارات من ملف الإعدادات
         $settingsPath = storage_path('app/settings.json');
         $settings = [];
         if (File::exists($settingsPath)) {
             $settings = json_decode(File::get($settingsPath), true) ?: [];
         }
 
-        // 3. تحديد المسار الأساسي الفعلي بناءً على نوع القسم والمسار المخزن في الإعدادات
-        $basePath = match ($type) {
-            'books' => $settings['path_books'] ?? public_path('books'),
-            'programs' => $settings['path_programs'] ?? public_path('programs'),
-            default => $settings['path_videos'] ?? public_path('videos'),
-        };
+        $categories = $settings['categories'] ?? [];
+        if (empty($categories)) {
+            // في حال عدم وجود أي قسم، نستخدم الأقسام الافتراضية
+            $categories = [
+                [
+                    'id' => 'videos',
+                    'name' => 'المحاضرات المرئية',
+                    'icon' => 'fa-solid fa-film',
+                    'path' => public_path('videos'),
+                    'extensions' => ['mp4', 'webm', 'mkv', 'avi'],
+                    'layout' => 'video'
+                ]
+            ];
+        }
+
+        // 2. تحديد نوع القسم النشط
+        $type = $request->query('type');
+        
+        // البحث عن القسم النشط
+        $currentCategory = null;
+        foreach ($categories as $cat) {
+            if ($cat['id'] === $type) {
+                $currentCategory = $cat;
+                break;
+            }
+        }
+
+        // إذا لم يتم تحديد القسم أو كان غير صالح، نأخذ أول قسم
+        if (!$currentCategory) {
+            $currentCategory = $categories[0];
+            $type = $currentCategory['id'];
+        }
+
+        // 3. تحديد المسار الأساسي الفعلي
+        $basePath = $currentCategory['path'] ?? public_path($type);
 
         // التأكد من وجود المجلد الأساسي، وإذا لم يكن موجوداً نحاول إنشائه أو استخدام الافتراضي
         if (!File::exists($basePath)) {
             try {
                 File::makeDirectory($basePath, 0755, true, true);
             } catch (\Exception $e) {
-                // في حال فشل الإنشاء (مثلاً بسبب الصلاحيات أو مسار سيرفر غير صالح)، نستخدم المجلد العام الافتراضي
+                // في حال فشل الإنشاء نستخدم المجلد العام الافتراضي
                 $basePath = public_path($type);
                 if (!File::exists($basePath)) {
                     File::makeDirectory($basePath, 0755, true, true);
@@ -64,11 +87,9 @@ class LibraryController extends Controller
             // جلب الملفات وتصفيتها حسب امتدادات القسم المحدد
             $allFiles = File::files($fullPath);
             
-            $allowedExtensions = match ($type) {
-                'books' => ['pdf', 'epub', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt', 'txt'],
-                'programs' => ['exe', 'zip', 'rar', '7z', 'msi'],
-                default => ['mp4', 'webm', 'mkv', 'avi'],
-            };
+            $allowedExtensions = $currentCategory['extensions'] ?? [];
+            // تحويل الامتدادات إلى أحرف صغيرة للمقارنة الصحيحة
+            $allowedExtensions = array_map('strtolower', $allowedExtensions);
 
             foreach ($allFiles as $file) {
                 $ext = strtolower($file->getExtension());
@@ -83,7 +104,7 @@ class LibraryController extends Controller
             }
         }
 
-        return view('welcome', compact('folders', 'files', 'currentFolder', 'type'));
+        return view('welcome', compact('folders', 'files', 'currentFolder', 'type', 'currentCategory'));
     }
 
     /**
@@ -108,11 +129,20 @@ class LibraryController extends Controller
             $settings = json_decode(File::get($settingsPath), true) ?: [];
         }
 
-        $basePath = match ($type) {
-            'books' => $settings['path_books'] ?? public_path('books'),
-            'programs' => $settings['path_programs'] ?? public_path('programs'),
-            default => $settings['path_videos'] ?? public_path('videos'),
-        };
+        $categories = $settings['categories'] ?? [];
+        $currentCategory = null;
+        foreach ($categories as $cat) {
+            if ($cat['id'] === $type) {
+                $currentCategory = $cat;
+                break;
+            }
+        }
+
+        if (!$currentCategory) {
+            abort(404, 'القسم غير موجود.');
+        }
+
+        $basePath = $currentCategory['path'] ?? public_path($type);
 
         $realBase = realpath($basePath);
         if (!$realBase) {
@@ -133,18 +163,18 @@ class LibraryController extends Controller
         }
 
         $extension = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
-        $allowedExtensions = match ($type) {
-            'books' => ['pdf', 'epub', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt', 'txt'],
-            'programs' => ['exe', 'zip', 'rar', '7z', 'msi'],
-            default => ['mp4', 'webm', 'mkv', 'avi'],
-        };
+        $allowedExtensions = $currentCategory['extensions'] ?? [];
+        $allowedExtensions = array_map('strtolower', $allowedExtensions);
 
         if (!in_array($extension, $allowedExtensions)) {
             abort(403, 'صيغة الملف غير مصرح بها.');
         }
 
-        // تقديم الفيديو والـ PDF والـ TXT للعرض، وباقي الصيغ للتحميل
-        if ($type === 'videos' || $extension === 'pdf' || $extension === 'txt') {
+        // تقديم الفيديو والـ PDF والـ TXT والصور للعرض، وباقي الصيغ للتحميل
+        $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'bmp', 'ico'];
+        if (($currentCategory['layout'] ?? '') === 'video' || 
+            in_array($extension, ['pdf', 'txt']) || 
+            in_array($extension, $imageExtensions)) {
             return response()->file($fullPath);
         } else {
             return response()->download($fullPath);

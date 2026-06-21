@@ -78,11 +78,12 @@ class SettingsController extends Controller
             $settings = json_decode(File::get($settingsPath), true) ?: [];
         }
 
-        $pathsStatus = [
-            'videos' => File::exists($settings['path_videos'] ?? public_path('videos')),
-            'books' => File::exists($settings['path_books'] ?? public_path('books')),
-            'programs' => File::exists($settings['path_programs'] ?? public_path('programs')),
-        ];
+        // قراءة حالة الأقسام ديناميكياً
+        $categories = $settings['categories'] ?? [];
+        $pathsStatus = [];
+        foreach ($categories as $cat) {
+            $pathsStatus[$cat['id']] = File::exists($cat['path'] ?? '');
+        }
 
         return view('settings', compact('pathsStatus'));
     }
@@ -104,9 +105,6 @@ class SettingsController extends Controller
             'color_primary' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'color_accent' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'color_bglight' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'path_videos' => 'required|string|max:255',
-            'path_books' => 'required|string|max:255',
-            'path_programs' => 'required|string|max:255',
             'welcome_text' => 'required|string|max:1000',
             // حماية حساب المشرف
             'admin_email' => 'required|email|max:100',
@@ -145,11 +143,13 @@ class SettingsController extends Controller
         $settings['color_primary'] = $request->input('color_primary');
         $settings['color_accent'] = $request->input('color_accent');
         $settings['color_bglight'] = $request->input('color_bglight');
-        $settings['path_videos'] = $request->input('path_videos');
-        $settings['path_books'] = $request->input('path_books');
-        $settings['path_programs'] = $request->input('path_programs');
         $settings['admin_email'] = $request->input('admin_email');
         $settings['welcome_text'] = $request->input('welcome_text');
+
+        // تنظيف وحذف المفاتيح القديمة غير المستخدمة
+        unset($settings['path_videos']);
+        unset($settings['path_books']);
+        unset($settings['path_programs']);
 
         // التعامل مع رفع الشعار
         if ($request->hasFile('logo_file')) {
@@ -176,5 +176,226 @@ class SettingsController extends Controller
         File::put($settingsPath, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
         return redirect()->back()->with('success', 'تم حفظ الإعدادات بنجاح!');
+    }
+
+    /**
+     * عرض صفحة إدارة الأقسام
+     */
+    public function categoriesIndex()
+    {
+        if (!session('admin_authenticated')) {
+            return redirect()->route('settings.login');
+        }
+
+        $settingsPath = storage_path('app/settings.json');
+        $settings = [];
+        if (File::exists($settingsPath)) {
+            $settings = json_decode(File::get($settingsPath), true) ?: [];
+        }
+
+        $categories = $settings['categories'] ?? [];
+        $pathsStatus = [];
+        foreach ($categories as $cat) {
+            $pathsStatus[$cat['id']] = File::exists($cat['path'] ?? '');
+        }
+
+        // الامتدادات الشائعة المجمعة
+        $availableExtensions = [
+            'المرئيات والفيديو' => ['mp4', 'webm', 'mkv', 'avi', 'mov', 'flv', 'wmv', '3gp'],
+            'الكتب والمستندات' => ['pdf', 'epub', 'txt', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'rtf', 'odt'],
+            'البرامج والملفات المضغوطة' => ['exe', 'msi', 'zip', 'rar', '7z', 'tar', 'gz', 'iso', 'dmg', 'apk'],
+            'الملفات الصوتية' => ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'],
+            'الصور والتصاميم' => ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'bmp', 'ico']
+        ];
+
+        return view('categories', compact('pathsStatus', 'categories', 'availableExtensions'));
+    }
+
+    /**
+     * حفظ (إنشاء أو تحديث) قسم واحد
+     */
+    public function categoriesSave(Request $request)
+    {
+        if (!session('admin_authenticated')) {
+            return redirect()->route('settings.login');
+        }
+
+        $request->validate([
+            'id' => 'required|string|alpha_dash|max:50',
+            'name' => 'required|string|max:100',
+            'icon' => 'required|string|max:100',
+            'path' => 'required|string|max:255',
+            'layout' => 'required|in:video,document,download',
+            'extensions' => 'required|array|min:1',
+            'extensions.*' => 'required|string|max:30',
+            'image_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+        ], [
+            'id.required' => 'معرف القسم مطلوب.',
+            'id.alpha_dash' => 'يجب أن يحتوي معرف القسم على حروف إنجليزية، أرقام، وشرطات فقط.',
+            'name.required' => 'اسم القسم مطلوب.',
+            'icon.required' => 'أيقونة القسم مطلوبة.',
+            'path.required' => 'مسار المجلد على السيرفر مطلوب.',
+            'layout.required' => 'طريقة العرض والتخطيط مطلوبة.',
+            'extensions.required' => 'يجب اختيار امتداد واحد على الأقل.',
+            'extensions.min' => 'يجب اختيار امتداد واحد على الأقل.',
+            'image_file.image' => 'يجب اختيار صورة صالحة.',
+            'image_file.max' => 'حجم الصورة يجب ألا يتجاوز 2 ميجابايت.',
+        ]);
+
+        $settingsPath = storage_path('app/settings.json');
+        $settings = [];
+        if (File::exists($settingsPath)) {
+            $settings = json_decode(File::get($settingsPath), true) ?: [];
+        }
+
+        $categories = $settings['categories'] ?? [];
+        
+        $originalId = $request->input('original_id');
+        $id = strtolower(trim($request->input('id')));
+        $id = str_replace(' ', '-', $id);
+
+        $newCategory = [
+            'id' => $id,
+            'name' => trim($request->input('name')),
+            'icon' => trim($request->input('icon')),
+            'path' => str_replace('\\', '/', trim($request->input('path'))),
+            'layout' => $request->input('layout'),
+            'extensions' => array_values(array_unique(array_map('strtolower', $request->input('extensions')))),
+            'image_path' => '', // القيمة الافتراضية
+        ];
+
+        // التعامل مع خيار حذف الصورة القديمة
+        $removeImage = $request->boolean('remove_image');
+
+        // جلب الصورة القديمة إن وجدت
+        $oldImagePath = '';
+        if (!empty($originalId)) {
+            foreach ($categories as $cat) {
+                if ($cat['id'] === $originalId) {
+                    $oldImagePath = $cat['image_path'] ?? '';
+                    $newCategory['image_path'] = $oldImagePath;
+                    break;
+                }
+            }
+        }
+
+        if ($removeImage) {
+            if (!empty($oldImagePath)) {
+                $fullOldPath = public_path($oldImagePath);
+                if (File::exists($fullOldPath)) {
+                    File::delete($fullOldPath);
+                }
+            }
+            $newCategory['image_path'] = '';
+        }
+
+        // رفع الصورة الجديدة وحفظها
+        if ($request->hasFile('image_file')) {
+            // حذف الصورة القديمة أولاً لتجنب تراكم الملفات
+            if (!empty($oldImagePath)) {
+                $fullOldPath = public_path($oldImagePath);
+                if (File::exists($fullOldPath)) {
+                    File::delete($fullOldPath);
+                }
+            }
+
+            $file = $request->file('image_file');
+            $uploadPath = public_path('uploads');
+            if (!File::exists($uploadPath)) {
+                File::makeDirectory($uploadPath, 0755, true);
+            }
+
+            $filename = 'cat_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->move($uploadPath, $filename);
+            $newCategory['image_path'] = 'uploads/' . $filename;
+        }
+
+        // تحقق من التكرار إذا كان معرفاً جديداً بالكامل
+        if (empty($originalId)) {
+            // إضافة قسم جديد
+            foreach ($categories as $cat) {
+                if ($cat['id'] === $id) {
+                    return redirect()->back()->withErrors(['id' => 'معرف القسم هذا مستخدم بالفعل، يرجى كتابة معرف فريد.'])->withInput();
+                }
+            }
+            $categories[] = $newCategory;
+        } else {
+            // تحديث قسم موجود
+            $found = false;
+            foreach ($categories as $index => $cat) {
+                if ($cat['id'] === $originalId) {
+                    // تحقق من المعرف الجديد هل هو مكرر مع قسم آخر
+                    if ($id !== $originalId) {
+                        foreach ($categories as $otherCat) {
+                            if ($otherCat['id'] === $id) {
+                                return redirect()->back()->withErrors(['id' => 'معرف القسم الجديد مستخدم بالفعل في قسم آخر.'])->withInput();
+                            }
+                        }
+                    }
+                    $categories[$index] = $newCategory;
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                $categories[] = $newCategory;
+            }
+        }
+
+        $settings['categories'] = $categories;
+
+        File::ensureDirectoryExists(dirname($settingsPath));
+        File::put($settingsPath, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+        return redirect()->route('settings.categories.index')->with('success', 'تم حفظ القسم بنجاح!');
+    }
+
+    /**
+     * حذف قسم
+     */
+    public function categoriesDelete(Request $request)
+    {
+        if (!session('admin_authenticated')) {
+            return redirect()->route('settings.login');
+        }
+
+        $request->validate([
+            'id' => 'required|string|max:50',
+        ]);
+
+        $settingsPath = storage_path('app/settings.json');
+        $settings = [];
+        if (File::exists($settingsPath)) {
+            $settings = json_decode(File::get($settingsPath), true) ?: [];
+        }
+
+        $categories = $settings['categories'] ?? [];
+        $id = $request->input('id');
+
+        if (count($categories) <= 1) {
+            return redirect()->back()->with('error', 'يجب أن تحتوي المكتبة على قسم واحد على الأقل. لا يمكن حذف هذا القسم.');
+        }
+
+        $newCategories = [];
+        foreach ($categories as $cat) {
+            if ($cat['id'] !== $id) {
+                $newCategories[] = $cat;
+            } else {
+                // حذف الصورة المرفقة بالقسم من القرص إن وجدت
+                if (!empty($cat['image_path'])) {
+                    $fullOldPath = public_path($cat['image_path']);
+                    if (File::exists($fullOldPath)) {
+                        File::delete($fullOldPath);
+                    }
+                }
+            }
+        }
+
+        $settings['categories'] = $newCategories;
+
+        File::ensureDirectoryExists(dirname($settingsPath));
+        File::put($settingsPath, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+        return redirect()->route('settings.categories.index')->with('success', 'تم حذف القسم بنجاح!');
     }
 }

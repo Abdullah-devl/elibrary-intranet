@@ -28,17 +28,71 @@ class AppServiceProvider extends ServiceProvider
             'color_primary' => '#1E293B',
             'color_accent' => '#D97706',
             'color_bglight' => '#F8FAFC',
-            'path_videos' => str_replace('\\', '/', public_path('videos')),
-            'path_books' => str_replace('\\', '/', public_path('books')),
-            'path_programs' => str_replace('\\', '/', public_path('programs')),
+            'categories' => [
+                [
+                    'id' => 'videos',
+                    'name' => 'المحاضرات المرئية',
+                    'icon' => 'fa-solid fa-film',
+                    'path' => str_replace('\\', '/', public_path('videos')),
+                    'extensions' => ['mp4', 'webm', 'mkv', 'avi'],
+                    'layout' => 'video'
+                ],
+                [
+                    'id' => 'books',
+                    'name' => 'الكتب والمراجع',
+                    'icon' => 'fa-solid fa-book-open',
+                    'path' => str_replace('\\', '/', public_path('books')),
+                    'extensions' => ['pdf', 'epub', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt', 'txt'],
+                    'layout' => 'document'
+                ],
+                [
+                    'id' => 'programs',
+                    'name' => 'البرامج والأدوات',
+                    'icon' => 'fa-solid fa-laptop-code',
+                    'path' => str_replace('\\', '/', public_path('programs')),
+                    'extensions' => ['exe', 'zip', 'rar', '7z', 'msi'],
+                    'layout' => 'download'
+                ]
+            ],
             'admin_email' => 'admin@gmail.com',
             'admin_password' => \Illuminate\Support\Facades\Hash::make('12345678'),
             'welcome_text' => 'منصة ذكية ومتكاملة مصممة خصيصاً لتسهيل تصفح وعرض المحاضرات التعليمية، الكتب والمراجع الدراسية، بالإضافة إلى البرامج والأدوات التقنية الهامة في مكان واحد وبسرعة فائقة داخل الشبكة المحلية.'
         ];
 
         if (\Illuminate\Support\Facades\File::exists($settingsPath)) {
-            $settings = json_decode(\Illuminate\Support\Facades\File::get($settingsPath), true);
-            $settings = array_merge($defaultSettings, $settings ?: []);
+            $settings = json_decode(\Illuminate\Support\Facades\File::get($settingsPath), true) ?: [];
+            
+            // هجرة الإعدادات القديمة إلى بنية الأقسام الجديدة إن لم تكن موجودة
+            if (!isset($settings['categories'])) {
+                $settings['categories'] = [
+                    [
+                        'id' => 'videos',
+                        'name' => 'المحاضرات المرئية',
+                        'icon' => 'fa-solid fa-film',
+                        'path' => str_replace('\\', '/', $settings['path_videos'] ?? public_path('videos')),
+                        'extensions' => ['mp4', 'webm', 'mkv', 'avi'],
+                        'layout' => 'video'
+                    ],
+                    [
+                        'id' => 'books',
+                        'name' => 'الكتب والمراجع',
+                        'icon' => 'fa-solid fa-book-open',
+                        'path' => str_replace('\\', '/', $settings['path_books'] ?? public_path('books')),
+                        'extensions' => ['pdf', 'epub', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt', 'txt'],
+                        'layout' => 'document'
+                    ],
+                    [
+                        'id' => 'programs',
+                        'name' => 'البرامج والأدوات',
+                        'icon' => 'fa-solid fa-laptop-code',
+                        'path' => str_replace('\\', '/', $settings['path_programs'] ?? public_path('programs')),
+                        'extensions' => ['exe', 'zip', 'rar', '7z', 'msi'],
+                        'layout' => 'download'
+                    ]
+                ];
+            }
+            
+            $settings = array_merge($defaultSettings, $settings);
         } else {
             $settings = $defaultSettings;
             \Illuminate\Support\Facades\File::ensureDirectoryExists(dirname($settingsPath));

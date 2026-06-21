@@ -22,3 +22,8 @@ Route::post('/settings/logout', [SettingsController::class, 'logout'])->name('se
 
 Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
 Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
+
+// مسارات إدارة الأقسام ديناميكياً
+Route::get('/settings/categories', [SettingsController::class, 'categoriesIndex'])->name('settings.categories.index');
+Route::post('/settings/categories/save', [SettingsController::class, 'categoriesSave'])->name('settings.categories.save');
+Route::post('/settings/categories/delete', [SettingsController::class, 'categoriesDelete'])->name('settings.categories.delete');

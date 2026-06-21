@@ -109,59 +109,19 @@
                         </div>
                     </div>
 
-                    <!-- مسارات ملفات السيرفر -->
-                    <div class="bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
-                        <h3 class="font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                            <i class="fa-solid fa-server text-accent"></i> مسارات ملفات السيرفر
-                        </h3>
-                        <div class="text-xs text-amber-700 mb-4 bg-amber-50 p-3 rounded-lg border border-amber-100 flex items-start gap-2">
-                            <i class="fa-solid fa-triangle-exclamation mt-0.5 text-sm flex-shrink-0"></i>
-                            <span><strong>ملاحظة هامة:</strong> حدد المسار الكامل للمجلد على السيرفر (مثل <code>D:\my-files</code> أو <code>D:\library\videos</code>). يدعم النظام المسارات المطلقة من أي مكان على القرص الصلب لتسهيل نقل المشروع وتوافقه مع السيرفر.</span>
+                    <!-- الانتقال لإدارة الأقسام -->
+                    <div class="bg-slate-50/50 p-5 rounded-2xl border border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 font-sans">
+                        <div>
+                            <h3 class="font-bold text-slate-800 flex items-center gap-2 text-sm sm:text-base">
+                                <i class="fa-solid fa-folder-tree text-accent"></i> إدارة أقسام المكتبة الرقمية
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-1 font-semibold">
+                                يمكنك إدارة وإضافة وحذف الأقسام وتحديد الصيغ والامتدادات المسموح بها عبر صفحة مخصصة ومستقلة.
+                            </p>
                         </div>
-                        <div class="space-y-4">
-                            <div>
-                                <label for="path_videos" class="block text-xs font-semibold text-slate-600 mb-1.5">مسار مجلد الفيديوهات</label>
-                                <input type="text" name="path_videos" id="path_videos" value="{{ $settings->path_videos ?? '' }}" required
-                                    class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none text-xs transition duration-200 font-mono">
-                                @if(isset($pathsStatus))
-                                    <div class="mt-1.5 flex items-center gap-1.5 text-xs font-semibold {{ $pathsStatus['videos'] ? 'text-emerald-600' : 'text-rose-500' }}">
-                                        @if($pathsStatus['videos'])
-                                            <i class="fa-solid fa-circle-check"></i> <span>المسار الفعلي المكتشف موجود وصالح للعمل</span>
-                                        @else
-                                            <i class="fa-solid fa-triangle-exclamation"></i> <span>المسار الفعلي المكتشف غير موجود حالياً (تأكد من صحة وجود المسار)</span>
-                                        @endif
-                                    </div>
-                                @endif
-                            </div>
-                            <div>
-                                <label for="path_books" class="block text-xs font-semibold text-slate-600 mb-1.5">مسار مجلد الكتب والمراجع</label>
-                                <input type="text" name="path_books" id="path_books" value="{{ $settings->path_books ?? '' }}" required
-                                    class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none text-xs transition duration-200 font-mono">
-                                @if(isset($pathsStatus))
-                                    <div class="mt-1.5 flex items-center gap-1.5 text-xs font-semibold {{ $pathsStatus['books'] ? 'text-emerald-600' : 'text-rose-500' }}">
-                                        @if($pathsStatus['books'])
-                                            <i class="fa-solid fa-circle-check"></i> <span>المسار الفعلي المكتشف موجود وصالح للعمل</span>
-                                        @else
-                                            <i class="fa-solid fa-triangle-exclamation"></i> <span>المسار الفعلي المكتشف غير موجود حالياً (تأكد من صحة وجود المسار)</span>
-                                        @endif
-                                    </div>
-                                @endif
-                            </div>
-                            <div>
-                                <label for="path_programs" class="block text-xs font-semibold text-slate-600 mb-1.5">مسار مجلد البرامج والأدوات</label>
-                                <input type="text" name="path_programs" id="path_programs" value="{{ $settings->path_programs ?? '' }}" required
-                                    class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none text-xs transition duration-200 font-mono">
-                                @if(isset($pathsStatus))
-                                    <div class="mt-1.5 flex items-center gap-1.5 text-xs font-semibold {{ $pathsStatus['programs'] ? 'text-emerald-600' : 'text-rose-500' }}">
-                                        @if($pathsStatus['programs'])
-                                            <i class="fa-solid fa-circle-check"></i> <span>المسار الفعلي المكتشف موجود وصالح للعمل</span>
-                                        @else
-                                            <i class="fa-solid fa-triangle-exclamation"></i> <span>المسار الفعلي المكتشف غير موجود حالياً (تأكد من صحة وجود المسار)</span>
-                                        @endif
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
+                        <a href="{{ route('settings.categories.index') }}" class="w-full sm:w-auto px-5 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm text-center">
+                            <i class="fa-solid fa-sliders text-accent"></i> الانتقال لصفحة إدارة الأقسام
+                        </a>
                     </div>
 
                     <!-- حماية حساب المشرف -->
@@ -643,6 +603,8 @@
                     updateColors();
                 });
             });
+
+            // تم نقل إدارة الأقسام لصفحة مستقلة
 
             // Initial trigger
             updateColors();

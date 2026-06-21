@@ -63,15 +63,19 @@
         
         <!-- التبويبات الرئيسية لتنقل السيرفر -->
         <div class="flex flex-col sm:flex-row border-b border-slate-200 mb-8 bg-white p-2 rounded-xl shadow-sm gap-2">
-            <a href="{{ url('/library?type=videos') }}" class="flex-1 py-3 px-4 rounded-lg font-bold text-center transition flex items-center justify-center gap-2 {{ $type === 'videos' ? 'bg-primary text-white' : 'text-slate-600 hover:bg-slate-50' }}">
-                <i class="fa-solid fa-film"></i> المحاضرات المرئية
-            </a>
-            <a href="{{ url('/library?type=books') }}" class="flex-1 py-3 px-4 rounded-lg font-bold text-center transition flex items-center justify-center gap-2 {{ $type === 'books' ? 'bg-primary text-white' : 'text-slate-600 hover:bg-slate-50' }}">
-                <i class="fa-solid fa-book-open"></i> الكتب والمراجع
-            </a>
-            <a href="{{ url('/library?type=programs') }}" class="flex-1 py-3 px-4 rounded-lg font-bold text-center transition flex items-center justify-center gap-2 {{ $type === 'programs' ? 'bg-primary text-white' : 'text-slate-600 hover:bg-slate-50' }}">
-                <i class="fa-solid fa-laptop-code"></i> البرامج والأدوات
-            </a>
+            @foreach($settings->categories ?? [] as $cat)
+                @php
+                    $cat = (array) $cat;
+                @endphp
+                <a href="{{ url('/library?type=' . $cat['id']) }}" class="flex-1 py-3 px-4 rounded-lg font-bold text-center transition flex items-center justify-center gap-2 {{ $type === $cat['id'] ? 'bg-primary text-white' : 'text-slate-600 hover:bg-slate-50' }}">
+                    @if(!empty($cat['image_path']))
+                        <img src="{{ asset($cat['image_path']) }}" class="w-6 h-6 object-cover rounded-md flex-shrink-0">
+                    @else
+                        <i class="{{ $cat['icon'] ?? 'fa-solid fa-folder' }}"></i>
+                    @endif
+                    {{ $cat['name'] }}
+                </a>
+            @endforeach
         </div>
 
         <!-- مسار التصفح الحالي -->
@@ -80,11 +84,8 @@
                 <i class="fa-solid fa-folder-open text-accent flex-shrink-0"></i>
                 <span class="truncate">
                     @php
-                        $typeLabel = match($type) {
-                            'books' => 'الكتب والمراجع',
-                            'programs' => 'البرامج والأدوات',
-                            default => 'المحاضرات المرئية',
-                        };
+                        $currentCategory = (array) $currentCategory;
+                        $typeLabel = $currentCategory['name'] ?? '';
                     @endphp
                     {{ $typeLabel }}
                     @if($currentFolder != '')
@@ -127,68 +128,87 @@
         <!-- عرض الملفات حسب نوع القسم المفتوح -->
         @if(count($files) > 0)
         <div>
+            @php
+                $currentCategory = (array) $currentCategory;
+                $layout = $currentCategory['layout'] ?? 'video';
+            @endphp
             <h2 class="text-xl font-bold mb-4 text-slate-700">
-                @if($type === 'videos')
-                    <i class="fa-solid fa-film ml-2 text-primary"></i>المحاضرات المرئية المتوفرة
-                @elseif($type === 'books')
-                    <i class="fa-solid fa-book-open ml-2 text-primary"></i>الكتب والملفات الدراسية
-                @else
-                    <i class="fa-solid fa-laptop-code ml-2 text-primary"></i>البرامج والتطبيقات
-                @endif
+                <i class="{{ $currentCategory['icon'] ?? 'fa-solid fa-folder-open' }} ml-2 text-primary"></i>{{ $currentCategory['name'] }} المتوفرة
             </h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach($files as $file)
                     @php
                         $fileQueryPath = ($currentFolder ? $currentFolder . '/' : '') . $file['name'];
+                        $isImage = in_array($file['extension'], ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'bmp', 'ico']);
                     @endphp
                     
-                    @if($type === 'videos')
-                        <!-- كارت الفيديو -->
+                    @if($layout === 'video')
+                        <!-- كارت الفيديو أو الصورة -->
                         <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-lg transition duration-300">
-                            <div class="aspect-video w-full bg-black relative">
-                                <video controls preload="none" class="w-full h-full object-cover">
-                                    <source src="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" type="video/mp4">
-                                    متصفحك لا يدعم التشغيل.
-                                </video>
-                            </div>
-                            <div class="p-4 flex justify-between items-center">
-                                <h4 class="font-bold text-slate-800 text-sm truncate w-3/4" title="{{ $file['name'] }}">
-                                    <i class="fa-solid fa-circle-play text-accent ml-1"></i> {{ $file['name_without_ext'] }}
-                                </h4>
-                                <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" download class="text-slate-400 hover:text-primary transition" title="تحميل">
-                                    <i class="fa-solid fa-download"></i>
-                                </a>
-                            </div>
+                            @if($isImage)
+                                <div class="aspect-video w-full bg-slate-50 relative overflow-hidden flex items-center justify-center border-b border-slate-100">
+                                    <img src="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" class="w-full h-full object-cover animate-fade-in" alt="{{ $file['name'] }}" loading="lazy">
+                                </div>
+                                <div class="p-4 flex justify-between items-center">
+                                    <h4 class="font-bold text-slate-800 text-sm truncate w-3/4" title="{{ $file['name'] }}">
+                                        <i class="fa-solid fa-image text-accent ml-1"></i> {{ $file['name_without_ext'] }}
+                                    </h4>
+                                    <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" download class="text-slate-400 hover:text-primary transition" title="تحميل">
+                                        <i class="fa-solid fa-download"></i>
+                                    </a>
+                                </div>
+                            @else
+                                <div class="aspect-video w-full bg-black relative">
+                                    <video controls preload="none" class="w-full h-full object-cover">
+                                        <source src="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" type="video/mp4">
+                                        متصفحك لا يدعم التشغيل.
+                                    </video>
+                                </div>
+                                <div class="p-4 flex justify-between items-center">
+                                    <h4 class="font-bold text-slate-800 text-sm truncate w-3/4" title="{{ $file['name'] }}">
+                                        <i class="fa-solid fa-circle-play text-accent ml-1"></i> {{ $file['name_without_ext'] }}
+                                    </h4>
+                                    <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" download class="text-slate-400 hover:text-primary transition" title="تحميل">
+                                        <i class="fa-solid fa-download"></i>
+                                    </a>
+                                </div>
+                            @endif
                         </div>
-                    @elseif($type === 'books')
-                        <!-- كارت الكتب والمراجع -->
+                    @elseif($layout === 'document')
+                        <!-- كارت الكتب والمراجع والمستندات -->
                         <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-lg transition duration-300 p-5 flex flex-col justify-between h-48">
                             <div class="flex items-start gap-4">
-                                @php
-                                    $bgClass = 'bg-slate-50 text-slate-500';
-                                    $iconClass = 'fa-solid fa-file-lines';
-                                    if ($file['extension'] === 'pdf') {
-                                        $bgClass = 'bg-rose-50 text-rose-500';
-                                        $iconClass = 'fa-solid fa-file-pdf';
-                                    } elseif (in_array($file['extension'], ['docx', 'doc'])) {
-                                        $bgClass = 'bg-blue-50 text-blue-500';
-                                        $iconClass = 'fa-solid fa-file-word';
-                                    } elseif (in_array($file['extension'], ['xlsx', 'xls'])) {
-                                        $bgClass = 'bg-emerald-50 text-emerald-600';
-                                        $iconClass = 'fa-solid fa-file-excel';
-                                    } elseif (in_array($file['extension'], ['pptx', 'ppt'])) {
-                                        $bgClass = 'bg-orange-50 text-orange-600';
-                                        $iconClass = 'fa-solid fa-file-powerpoint';
-                                    } elseif ($file['extension'] === 'epub') {
-                                        $bgClass = 'bg-indigo-50 text-indigo-600';
-                                        $iconClass = 'fa-solid fa-book';
-                                    }
-                                @endphp
-                                <div class="p-3 {{ $bgClass }} rounded-lg text-3xl flex-shrink-0">
-                                    <i class="{{ $iconClass }}"></i>
-                                </div>
-                                <div class="truncate w-full">
+                                @if($isImage)
+                                    <div class="w-14 h-14 rounded-lg overflow-hidden bg-slate-100 border border-slate-200/80 shadow-inner flex-shrink-0 flex items-center justify-center font-semibold">
+                                        <img src="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" class="w-full h-full object-cover" alt="{{ $file['name'] }}" loading="lazy">
+                                    </div>
+                                @else
+                                    @php
+                                        $bgClass = 'bg-slate-50 text-slate-500';
+                                        $iconClass = 'fa-solid fa-file-lines';
+                                        if ($file['extension'] === 'pdf') {
+                                            $bgClass = 'bg-rose-50 text-rose-500';
+                                            $iconClass = 'fa-solid fa-file-pdf';
+                                        } elseif (in_array($file['extension'], ['docx', 'doc'])) {
+                                            $bgClass = 'bg-blue-50 text-blue-500';
+                                            $iconClass = 'fa-solid fa-file-word';
+                                        } elseif (in_array($file['extension'], ['xlsx', 'xls'])) {
+                                            $bgClass = 'bg-emerald-50 text-emerald-600';
+                                            $iconClass = 'fa-solid fa-file-excel';
+                                        } elseif (in_array($file['extension'], ['pptx', 'ppt'])) {
+                                            $bgClass = 'bg-orange-50 text-orange-600';
+                                            $iconClass = 'fa-solid fa-file-powerpoint';
+                                        } elseif ($file['extension'] === 'epub') {
+                                            $bgClass = 'bg-indigo-50 text-indigo-600';
+                                            $iconClass = 'fa-solid fa-book';
+                                        }
+                                    @endphp
+                                    <div class="p-3 {{ $bgClass }} rounded-lg text-3xl flex-shrink-0 font-semibold">
+                                        <i class="{{ $iconClass }}"></i>
+                                    </div>
+                                @endif
+                                <div class="truncate w-full font-semibold">
                                     <h4 class="font-bold text-slate-800 text-sm truncate" title="{{ $file['name'] }}">
                                         {{ $file['name_without_ext'] }}
                                     </h4>
@@ -199,7 +219,7 @@
                             <div class="flex gap-2 mt-4 pt-3 border-t border-slate-50">
                                 <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" target="_blank" 
                                    class="flex-1 text-center py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
-                                    <i class="fa-solid fa-eye"></i> قراءة
+                                    <i class="fa-solid fa-eye"></i> {{ $isImage ? 'عرض' : 'قراءة' }}
                                 </a>
                                 <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" download
                                    class="flex-1 text-center py-2 bg-primary hover:opacity-90 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
@@ -207,18 +227,24 @@
                                 </a>
                             </div>
                         </div>
-                    @elseif($type === 'programs')
-                        <!-- كارت البرامج والأدوات -->
+                    @else
+                        <!-- كارت البرامج والأدوات والتنزيلات المباشرة -->
                         <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-lg transition duration-300 p-5 flex flex-col justify-between h-48">
                             <div class="flex items-start gap-4">
-                                <div class="p-3 bg-indigo-50 text-indigo-600 rounded-lg text-3xl flex-shrink-0">
-                                    @if(in_array($file['extension'], ['zip', 'rar', '7z']))
-                                        <i class="fa-solid fa-file-zipper text-amber-500"></i>
-                                    @else
-                                        <i class="fa-solid fa-laptop-code text-indigo-500"></i>
-                                    @endif
-                                </div>
-                                <div class="truncate w-full">
+                                @if($isImage)
+                                    <div class="w-14 h-14 rounded-lg overflow-hidden bg-slate-100 border border-slate-200/80 shadow-inner flex-shrink-0 flex items-center justify-center font-semibold">
+                                        <img src="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" class="w-full h-full object-cover" alt="{{ $file['name'] }}" loading="lazy">
+                                    </div>
+                                @else
+                                    <div class="p-3 bg-indigo-50 text-indigo-600 rounded-lg text-3xl flex-shrink-0 font-semibold">
+                                        @if(in_array($file['extension'], ['zip', 'rar', '7z']))
+                                            <i class="fa-solid fa-file-zipper text-amber-500"></i>
+                                        @else
+                                            <i class="fa-solid fa-laptop-code text-indigo-500"></i>
+                                        @endif
+                                    </div>
+                                @endif
+                                <div class="truncate w-full font-semibold">
                                     <h4 class="font-bold text-slate-800 text-sm truncate" title="{{ $file['name'] }}">
                                         {{ $file['name_without_ext'] }}
                                     </h4>
@@ -227,10 +253,21 @@
                                 </div>
                             </div>
                             <div class="flex gap-2 mt-4 pt-3 border-t border-slate-50">
-                                <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" download
-                                   class="w-full text-center py-2 bg-primary hover:opacity-90 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
-                                    <i class="fa-solid fa-download"></i> تنزيل البرنامج
-                                </a>
+                                @if($isImage)
+                                    <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" target="_blank" 
+                                       class="flex-1 text-center py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
+                                        <i class="fa-solid fa-eye"></i> عرض
+                                    </a>
+                                    <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" download
+                                       class="flex-1 text-center py-2 bg-primary hover:opacity-90 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
+                                        <i class="fa-solid fa-download"></i> تنزيل
+                                    </a>
+                                @else
+                                    <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" download
+                                       class="w-full text-center py-2 bg-primary hover:opacity-90 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-download"></i> تنزيل الملف
+                                    </a>
+                                @endif
                             </div>
                         </div>
                     @endif
