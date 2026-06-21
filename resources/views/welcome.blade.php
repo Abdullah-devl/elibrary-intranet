@@ -151,12 +151,17 @@
                                     <img src="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" class="w-full h-full object-cover animate-fade-in" alt="{{ $file['name'] }}" loading="lazy">
                                 </div>
                                 <div class="p-4 flex justify-between items-center">
-                                    <h4 class="font-bold text-slate-800 text-sm truncate w-3/4" title="{{ $file['name'] }}">
+                                    <h4 class="font-bold text-slate-800 text-sm truncate w-2/3" title="{{ $file['name'] }}">
                                         <i class="fa-solid fa-image text-accent ml-1"></i> {{ $file['name_without_ext'] }}
                                     </h4>
-                                    <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" download class="text-slate-400 hover:text-primary transition" title="تحميل">
-                                        <i class="fa-solid fa-download"></i>
-                                    </a>
+                                    <div class="flex items-center gap-3 flex-shrink-0">
+                                        <button onclick="openUsbModal('{{ $type }}', '{{ $fileQueryPath }}', '{{ $file['name'] }}')" class="text-slate-400 hover:text-accent transition text-base" title="إرسال لفلاش السيرفر (USB)">
+                                            <i class="fa-solid fa-usb"></i>
+                                        </button>
+                                        <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" download class="text-slate-400 hover:text-primary transition text-base" title="تحميل">
+                                            <i class="fa-solid fa-download"></i>
+                                        </a>
+                                    </div>
                                 </div>
                             @else
                                 <div class="aspect-video w-full bg-black relative">
@@ -166,12 +171,17 @@
                                     </video>
                                 </div>
                                 <div class="p-4 flex justify-between items-center">
-                                    <h4 class="font-bold text-slate-800 text-sm truncate w-3/4" title="{{ $file['name'] }}">
+                                    <h4 class="font-bold text-slate-800 text-sm truncate w-2/3" title="{{ $file['name'] }}">
                                         <i class="fa-solid fa-circle-play text-accent ml-1"></i> {{ $file['name_without_ext'] }}
                                     </h4>
-                                    <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" download class="text-slate-400 hover:text-primary transition" title="تحميل">
-                                        <i class="fa-solid fa-download"></i>
-                                    </a>
+                                    <div class="flex items-center gap-3 flex-shrink-0">
+                                        <button onclick="openUsbModal('{{ $type }}', '{{ $fileQueryPath }}', '{{ $file['name'] }}')" class="text-slate-400 hover:text-accent transition text-base" title="إرسال لفلاش السيرفر (USB)">
+                                            <i class="fa-solid fa-usb"></i>
+                                        </button>
+                                        <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" download class="text-slate-400 hover:text-primary transition text-base" title="تحميل">
+                                            <i class="fa-solid fa-download"></i>
+                                        </a>
+                                    </div>
                                 </div>
                             @endif
                         </div>
@@ -218,11 +228,15 @@
                             </div>
                             <div class="flex gap-2 mt-4 pt-3 border-t border-slate-50">
                                 <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" target="_blank" 
-                                   class="flex-1 text-center py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
+                                   class="flex-1 text-center py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1 border border-slate-200/50">
                                     <i class="fa-solid fa-eye"></i> {{ $isImage ? 'عرض' : 'قراءة' }}
                                 </a>
+                                <button onclick="openUsbModal('{{ $type }}', '{{ $fileQueryPath }}', '{{ $file['name'] }}')"
+                                   class="flex-1 text-center py-2 bg-accent/10 hover:bg-accent/20 text-accent rounded-lg text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-usb"></i> إرسال لـ USB
+                                </button>
                                 <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" download
-                                   class="flex-1 text-center py-2 bg-primary hover:opacity-90 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
+                                   class="flex-1 text-center py-2 bg-primary hover:opacity-90 text-white rounded-lg text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1">
                                     <i class="fa-solid fa-download"></i> تحميل
                                 </a>
                             </div>
@@ -255,16 +269,24 @@
                             <div class="flex gap-2 mt-4 pt-3 border-t border-slate-50">
                                 @if($isImage)
                                     <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" target="_blank" 
-                                       class="flex-1 text-center py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
+                                       class="flex-1 text-center py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1 border border-slate-200/50">
                                         <i class="fa-solid fa-eye"></i> عرض
                                     </a>
+                                    <button onclick="openUsbModal('{{ $type }}', '{{ $fileQueryPath }}', '{{ $file['name'] }}')"
+                                       class="flex-1 text-center py-2 bg-accent/10 hover:bg-accent/20 text-accent rounded-lg text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1">
+                                        <i class="fa-solid fa-usb"></i> إرسال لـ USB
+                                    </button>
                                     <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" download
-                                       class="flex-1 text-center py-2 bg-primary hover:opacity-90 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
+                                       class="flex-1 text-center py-2 bg-primary hover:opacity-90 text-white rounded-lg text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1">
                                         <i class="fa-solid fa-download"></i> تنزيل
                                     </a>
                                 @else
+                                    <button onclick="openUsbModal('{{ $type }}', '{{ $fileQueryPath }}', '{{ $file['name'] }}')"
+                                       class="flex-1 text-center py-2 bg-accent/10 hover:bg-accent/20 text-accent rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5">
+                                        <i class="fa-solid fa-usb"></i> نسخ لـ USB
+                                    </button>
                                     <a href="{{ route('file.serve', ['type' => $type, 'file' => $fileQueryPath]) }}" download
-                                       class="w-full text-center py-2 bg-primary hover:opacity-90 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
+                                       class="flex-1 text-center py-2 bg-primary hover:opacity-90 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5">
                                         <i class="fa-solid fa-download"></i> تنزيل الملف
                                     </a>
                                 @endif
@@ -285,5 +307,313 @@
         @endif
 
     </main>
+
+    <!-- نافذة منبثقة لنسخ الملفات لـ USB (USB Copy Modal) -->
+    <div id="usb-modal" class="fixed inset-0 z-50 overflow-y-auto hidden">
+        <!-- خلفية ضبابية -->
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300"></div>
+
+        <!-- المودال نفسه -->
+        <div class="flex min-h-full items-center justify-center p-4 text-center">
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-right shadow-2xl transition-all duration-300 w-full max-w-md p-6 my-8 border border-white/20">
+                
+                <!-- هيدر المودال -->
+                <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-4">
+                    <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-usb text-accent animate-pulse"></i>
+                        <span>نسخ مباشر إلى فلاش السيرفر (USB)</span>
+                    </h3>
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        <button type="button" onclick="minimizeUsbModal()" class="text-slate-400 hover:text-slate-600 transition p-1.5 hover:bg-slate-50 rounded-lg animate-fade-in" title="تصغير النافذة لمتابعة التصفح">
+                            <i class="fa-solid fa-minus text-base"></i>
+                        </button>
+                        <button type="button" onclick="closeUsbModal()" class="text-slate-400 hover:text-slate-600 transition p-1.5 hover:bg-slate-50 rounded-lg" title="إغلاق">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- محتوى المودال -->
+                <div class="space-y-4">
+                    <!-- تفاصيل الملف الحالي -->
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 text-xs text-slate-600 space-y-1">
+                        <div><span class="font-bold text-slate-700">اسم الملف:</span> <span id="usb-modal-file-name" class="font-mono text-slate-800 break-all font-semibold"></span></div>
+                    </div>
+
+                    <!-- حالة البحث / اللودر -->
+                    <div id="usb-drives-loading" class="flex flex-col items-center justify-center py-8 space-y-3">
+                        <i class="fa-solid fa-circle-notch fa-spin text-3xl text-primary"></i>
+                        <span class="text-sm text-slate-500 font-bold">جاري الكشف عن الأقراص والفلاشات المتصلة بالسيرفر...</span>
+                    </div>
+
+                    <!-- قائمة الأقراص المتوفرة -->
+                    <div id="usb-drives-list" class="space-y-2 max-h-60 overflow-y-auto hidden">
+                        <!-- سيتم تعبئتها بواسطة Javascript -->
+                    </div>
+
+                    <!-- رسالة عدم وجود أقراص -->
+                    <div id="usb-no-drives" class="text-center py-6 hidden space-y-3">
+                        <i class="fa-solid fa-triangle-exclamation text-4xl text-amber-500"></i>
+                        <p class="text-sm text-slate-600 font-bold">لم يتم العثور على أي أقراص أو فلاشات USB موصولة بالسيرفر حالياً.</p>
+                        <button type="button" onclick="refreshDrives()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-extrabold rounded-xl transition flex items-center gap-1.5 mx-auto">
+                            <i class="fa-solid fa-rotate"></i> تحديث القائمة
+                        </button>
+                    </div>
+
+                    <!-- حالة جاري النسخ -->
+                    <div id="usb-copying-state" class="flex flex-col items-center justify-center py-8 space-y-3 hidden">
+                        <i class="fa-solid fa-spinner fa-spin text-4xl text-accent"></i>
+                        <span class="text-sm text-slate-700 font-bold">جاري نسخ الملف بسرعة فائقة إلى الفلاش ميموري...</span>
+                        <span class="text-[10px] text-slate-400">يرجى عدم فصل الفلاش ميموري أو إغلاق الصفحة</span>
+                    </div>
+
+                    <!-- رسالة النجاح أو الفشل -->
+                    <div id="usb-status-message" class="hidden p-4 rounded-xl border text-sm space-y-2">
+                        <!-- سيتم تعبئتها بواسطة Javascript -->
+                    </div>
+                </div>
+
+                <!-- ذيل المودال -->
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 mt-5">
+                    <button type="button" id="btn-usb-close" onclick="closeUsbModal()" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition text-xs">
+                        إغلاق
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- الويجت المصغر لمتابعة النسخ أسفل الشاشة (Floating Minimized Widget) -->
+    <div id="usb-minimized-widget" class="fixed bottom-5 left-5 bg-white border border-slate-200/80 shadow-2xl rounded-2xl p-4 flex items-center gap-3.5 max-w-sm transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none z-50">
+        <!-- الأيقونة التفاعلية -->
+        <div id="usb-minimized-icon-container" class="w-8 h-8 rounded-lg bg-accent/10 text-accent flex items-center justify-center flex-shrink-0 animate-pulse">
+            <i class="fa-solid fa-usb text-sm"></i>
+        </div>
+        <!-- نصوص الحالة -->
+        <div class="truncate flex-grow min-w-0">
+            <h5 id="usb-minimized-title" class="text-xs font-extrabold text-slate-800">جاري الكشف عن الأقراص...</h5>
+            <p id="usb-minimized-file-name" class="text-[10px] text-slate-400 truncate max-w-[160px] font-semibold"></p>
+        </div>
+        <!-- أزرار التحكم -->
+        <div class="flex items-center gap-1.5 flex-shrink-0">
+            <button type="button" onclick="maximizeUsbModal()" class="text-slate-400 hover:text-primary transition p-1.5 hover:bg-slate-50 rounded-lg text-sm" title="تكبير وتفصيل">
+                <i class="fa-solid fa-expand"></i>
+            </button>
+            <button type="button" id="usb-minimized-close-btn" onclick="closeUsbMinimizedWidget()" class="text-slate-400 hover:text-rose-600 transition p-1.5 hover:bg-slate-50 rounded-lg text-sm hidden" title="إغلاق">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentUsbType = '';
+        let currentUsbFilePath = '';
+
+        function openUsbModal(type, fileQueryPath, fileName) {
+            currentUsbType = type;
+            currentUsbFilePath = fileQueryPath;
+            
+            // تعيين اسم الملف في هيدر المودال والويجت المصغر
+            document.getElementById('usb-modal-file-name').textContent = fileName;
+            document.getElementById('usb-minimized-file-name').textContent = fileName;
+            
+            // إعادة ضبط حالة الويجت المصغر
+            updateMinimizedWidgetStatus('copying', 'جاري كشف فلاشات السيرفر...');
+            
+            // إظهار المودال وتعيين الحالة الافتراضية
+            const modal = document.getElementById('usb-modal');
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+            
+            // جلب الأقراص
+            refreshDrives();
+        }
+
+        function closeUsbModal() {
+            // إخفاء المودال وإعادة تفعيل التمرير للجسم
+            const modal = document.getElementById('usb-modal');
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            closeUsbMinimizedWidget();
+        }
+
+        function minimizeUsbModal() {
+            // إخفاء المودال وتفعيل التمرير لمتابعة التصفح
+            const modal = document.getElementById('usb-modal');
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            
+            // إظهار الويجت المصغر
+            const widget = document.getElementById('usb-minimized-widget');
+            widget.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            widget.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+        }
+
+        function maximizeUsbModal() {
+            // إخفاء الويجت المصغر
+            const widget = document.getElementById('usb-minimized-widget');
+            widget.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+            widget.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            
+            // إظهار المودال الرئيسي وإيقاف السكرول
+            const modal = document.getElementById('usb-modal');
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function closeUsbMinimizedWidget() {
+            const widget = document.getElementById('usb-minimized-widget');
+            widget.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+            widget.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+        }
+
+        function updateMinimizedWidgetStatus(state, message) {
+            const titleEl = document.getElementById('usb-minimized-title');
+            const iconEl = document.getElementById('usb-minimized-icon-container');
+            const closeBtn = document.getElementById('usb-minimized-close-btn');
+
+            if (titleEl) titleEl.textContent = message;
+            
+            if (iconEl && closeBtn) {
+                if (state === 'copying') {
+                    iconEl.className = 'w-8 h-8 rounded-lg bg-accent/10 text-accent flex items-center justify-center flex-shrink-0 animate-pulse';
+                    iconEl.innerHTML = '<i class="fa-solid fa-usb text-sm"></i>';
+                    closeBtn.classList.add('hidden');
+                } else if (state === 'success') {
+                    iconEl.className = 'w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0';
+                    iconEl.innerHTML = '<i class="fa-solid fa-circle-check text-sm"></i>';
+                    closeBtn.classList.remove('hidden');
+                    // إخفاء الويجت تلقائياً بعد 6 ثوانٍ
+                    setTimeout(() => {
+                        closeUsbMinimizedWidget();
+                    }, 6000);
+                } else if (state === 'error') {
+                    iconEl.className = 'w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center flex-shrink-0';
+                    iconEl.innerHTML = '<i class="fa-solid fa-circle-xmark text-sm"></i>';
+                    closeBtn.classList.remove('hidden');
+                }
+            }
+        }
+
+        function refreshDrives() {
+            // إظهار اللودر وإخفاء العناصر الأخرى
+            document.getElementById('usb-drives-loading').classList.remove('hidden');
+            document.getElementById('usb-drives-list').classList.add('hidden');
+            document.getElementById('usb-no-drives').classList.add('hidden');
+            document.getElementById('usb-copying-state').classList.add('hidden');
+            document.getElementById('usb-status-message').classList.add('hidden');
+            document.getElementById('btn-usb-close').removeAttribute('disabled');
+
+            // طلب أجاكس للكشف عن الأقراص
+            fetch('{{ route("library.detect_drives") }}')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('usb-drives-loading').classList.add('hidden');
+                    
+                    if (data.success && data.drives && data.drives.length > 0) {
+                        const listContainer = document.getElementById('usb-drives-list');
+                        listContainer.innerHTML = '';
+                        
+                        data.drives.forEach(drive => {
+                            const driveCard = document.createElement('button');
+                            driveCard.type = 'button';
+                            driveCard.className = 'w-full flex items-center justify-between p-3.5 bg-white hover:bg-slate-50 border border-slate-200 hover:border-primary rounded-xl transition duration-300 text-right group mb-2 last:mb-0';
+                            driveCard.onclick = () => copyFileToDrive(drive.letter);
+                            
+                            driveCard.innerHTML = `
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-lg group-hover:scale-105 transition duration-300">
+                                        <i class="fa-solid fa-hard-drive"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800 text-sm">القرص ${drive.letter}: (${drive.volume_name})</h4>
+                                        <p class="text-[10px] text-slate-400 mt-0.5">المساحة المتوفرة: ${drive.free} من إجمالي ${drive.total}</p>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end gap-1.5">
+                                    <span class="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold">جاهز للنسخ</span>
+                                    <div class="w-16 bg-slate-100 rounded-full h-1 overflow-hidden">
+                                        <div class="bg-primary h-full" style="width: ${drive.percent_used}%"></div>
+                                    </div>
+                                </div>
+                            `;
+                            listContainer.appendChild(driveCard);
+                        });
+                        listContainer.classList.remove('hidden');
+                    } else {
+                        document.getElementById('usb-no-drives').classList.remove('hidden');
+                        updateMinimizedWidgetStatus('error', 'لا توجد فلاشات موصولة');
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('usb-drives-loading').classList.add('hidden');
+                    const statusMsg = document.getElementById('usb-status-message');
+                    statusMsg.className = 'p-4 rounded-xl border border-rose-100 bg-rose-50 text-rose-800 text-xs space-y-1 block';
+                    statusMsg.innerHTML = `
+                        <div class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation"></i> فشل الكشف عن الأقراص</div>
+                        <p class="text-[10px] text-rose-600 mt-1">حدث خطأ أثناء التواصل مع السيرفر: ${error.message}</p>
+                    `;
+                    updateMinimizedWidgetStatus('error', 'فشل كشف الأقراص');
+                });
+        }
+
+        function copyFileToDrive(driveLetter) {
+            // إخفاء القائمة وإظهار حالة النسخ
+            document.getElementById('usb-drives-list').classList.add('hidden');
+            document.getElementById('usb-copying-state').classList.remove('hidden');
+            document.getElementById('btn-usb-close').setAttribute('disabled', 'true');
+            
+            // تحديث حالة الويجت المصغر
+            updateMinimizedWidgetStatus('copying', `جاري النسخ للقرص ${driveLetter}...`);
+
+            // إرسال طلب النسخ بالـ POST
+            fetch('{{ route("library.copy_to_drive") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    type: '{{ $type }}',
+                    file: currentUsbFilePath,
+                    drive: driveLetter
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('usb-copying-state').classList.add('hidden');
+                document.getElementById('btn-usb-close').removeAttribute('disabled');
+                
+                const statusMsg = document.getElementById('usb-status-message');
+                if (data.success) {
+                    statusMsg.className = 'p-4 rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-800 text-xs space-y-1 block';
+                    statusMsg.innerHTML = `
+                        <div class="font-bold flex items-center gap-1.5 text-sm"><i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i> تمت عملية النسخ بنجاح!</div>
+                        <p class="text-[10px] text-emerald-600 mt-1">${data.message}</p>
+                    `;
+                    updateMinimizedWidgetStatus('success', 'تم النسخ بنجاح!');
+                } else {
+                    statusMsg.className = 'p-4 rounded-xl border border-rose-100 bg-rose-50 text-rose-800 text-xs space-y-1 block';
+                    statusMsg.innerHTML = `
+                        <div class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-circle-xmark text-rose-600 font-bold"></i> فشل نسخ الملف للقرص</div>
+                        <p class="text-[10px] text-rose-600 mt-1">${data.message}</p>
+                    `;
+                    updateMinimizedWidgetStatus('error', 'فشل نسخ الملف!');
+                }
+            })
+            .catch(error => {
+                document.getElementById('usb-copying-state').classList.add('hidden');
+                document.getElementById('btn-usb-close').removeAttribute('disabled');
+                
+                const statusMsg = document.getElementById('usb-status-message');
+                statusMsg.className = 'p-4 rounded-xl border border-rose-100 bg-rose-50 text-rose-800 text-xs space-y-1 block';
+                statusMsg.innerHTML = `
+                    <div class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation"></i> حدث خطأ أثناء النسخ</div>
+                    <p class="text-[10px] text-rose-600 mt-1">فشل الاتصال بالسيرفر لإتمام عملية النسخ: ${error.message}</p>
+                `;
+            });
+        }
+    </script>
 </body>
 </html>

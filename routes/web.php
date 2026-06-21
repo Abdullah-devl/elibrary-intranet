@@ -15,6 +15,10 @@ Route::get('/library', [LibraryController::class, 'index'])->name('library.index
 // مسار تشغيل وتحميل الملفات بشكل آمن من أي مجلد على السيرفر
 Route::get('/serve-file', [LibraryController::class, 'serveFile'])->name('file.serve');
 
+// مسارات كشف الأقراص والنسخ المباشر للفلاش ميموري
+Route::get('/library/detect-drives', [LibraryController::class, 'detectDrives'])->name('library.detect_drives');
+Route::post('/library/copy-to-drive', [LibraryController::class, 'copyToDrive'])->name('library.copy_to_drive');
+
 // مسارات صفحة الإعدادات والحماية
 Route::get('/settings/login', [SettingsController::class, 'showLogin'])->name('settings.login');
 Route::post('/settings/login', [SettingsController::class, 'login'])->name('settings.login_submit');
