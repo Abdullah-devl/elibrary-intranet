@@ -56,7 +56,10 @@ class AppServiceProvider extends ServiceProvider
             ],
             'admin_email' => 'admin@gmail.com',
             'admin_password' => \Illuminate\Support\Facades\Hash::make('12345678'),
-            'welcome_text' => 'منصة ذكية ومتكاملة مصممة خصيصاً لتسهيل تصفح وعرض المحاضرات التعليمية، الكتب والمراجع الدراسية، بالإضافة إلى البرامج والأدوات التقنية الهامة في مكان واحد وبسرعة فائقة داخل الشبكة المحلية.'
+            'welcome_text' => 'منصة ذكية ومتكاملة مصممة خصيصاً لتسهيل تصفح وعرض المحاضرات التعليمية، الكتب والمراجع الدراسية، بالإضافة إلى البرامج والأدوات التقنية الهامة في مكان واحد وبسرعة فائقة داخل الشبكة المحلية.',
+            'cache_duration' => 5, // مدة الكاش الافتراضية بالدقائق (5 دقائق)
+            'file_serving_mode' => 'php', // طريقة تشغيل وتحميل الملفات (php, x_sendfile, x_accel_redirect)
+            'nginx_internal_path' => '/protected-files', // المسار الداخلي لـ Nginx
         ];
 
         if (\Illuminate\Support\Facades\File::exists($settingsPath)) {

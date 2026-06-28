@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
 
 class SettingsController extends Controller
 {
@@ -110,6 +111,10 @@ class SettingsController extends Controller
             'admin_email' => 'required|email|max:100',
             'current_password' => 'nullable|required_with:new_password|string',
             'new_password' => 'nullable|confirmed|min:8|string', // الحد الأدنى 8 خانات
+            // إعدادات الأداء الجديدة
+            'cache_duration' => 'required|integer|min:0|max:1440',
+            'file_serving_mode' => 'required|in:php,x_sendfile,x_accel_redirect',
+            'nginx_internal_path' => 'nullable|string|max:255',
         ], [
             'admin_email.required' => 'حقل البريد الإلكتروني للمشرف مطلوب.',
             'admin_email.email' => 'يرجى كتابة بريد إلكتروني بشكل صحيح.',
@@ -145,6 +150,11 @@ class SettingsController extends Controller
         $settings['color_bglight'] = $request->input('color_bglight');
         $settings['admin_email'] = $request->input('admin_email');
         $settings['welcome_text'] = $request->input('welcome_text');
+        
+        // تخزين إعدادات الأداء الجديدة
+        $settings['cache_duration'] = (int) $request->input('cache_duration');
+        $settings['file_serving_mode'] = $request->input('file_serving_mode');
+        $settings['nginx_internal_path'] = $request->input('nginx_internal_path') ?: '/protected-files';
 
         // تنظيف وحذف المفاتيح القديمة غير المستخدمة
         unset($settings['path_videos']);
@@ -175,7 +185,10 @@ class SettingsController extends Controller
         File::ensureDirectoryExists(dirname($settingsPath));
         File::put($settingsPath, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-        return redirect()->back()->with('success', 'تم حفظ الإعدادات بنجاح!');
+        // تفريغ الكاش بالكامل للتأكد من تطبيق الإعدادات البرمجية الجديدة فوراً
+        Cache::flush();
+
+        return redirect()->back()->with('success', 'تم حفظ الإعدادات بنجاح وتحديث الذاكرة المؤقتة!');
     }
 
     /**
@@ -347,6 +360,9 @@ class SettingsController extends Controller
         File::ensureDirectoryExists(dirname($settingsPath));
         File::put($settingsPath, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
+        // تفريغ الكاش لضمان تحديث قوائم الطلاب فوراً
+        Cache::flush();
+
         return redirect()->route('settings.categories.index')->with('success', 'تم حفظ القسم بنجاح!');
     }
 
@@ -395,6 +411,9 @@ class SettingsController extends Controller
 
         File::ensureDirectoryExists(dirname($settingsPath));
         File::put($settingsPath, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+        // تفريغ الكاش لضمان تحديث قوائم الطلاب فوراً
+        Cache::flush();
 
         return redirect()->route('settings.categories.index')->with('success', 'تم حذف القسم بنجاح!');
     }

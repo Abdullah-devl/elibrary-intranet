@@ -220,6 +220,64 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- كارت إعدادات الأداء والتحميل المسرّع -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-6">
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-4">
+                        <i class="fa-solid fa-gauge-high text-accent"></i>
+                        إعدادات الأداء والتحميل المسرّع (لتحمل مئات الطلاب)
+                    </h2>
+                    
+                    <div class="text-xs text-amber-700 bg-amber-50 p-4 rounded-xl border border-amber-200 flex items-start gap-3">
+                        <i class="fa-solid fa-triangle-exclamation text-base mt-0.5 flex-shrink-0"></i>
+                        <div>
+                            <span class="font-bold">تنبيه للمشرف:</span> هذه الإعدادات تمكن النظام من العمل بسرعة فائقة وتحمل عدد كبير من الطلاب في نفس الوقت (50 إلى 300 طالب متزامن) دون تجميد للسيرفر أو استهلاك للذاكرة.
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- مدة الذاكرة المؤقتة (الكاش) -->
+                        <div>
+                            <label for="cache_duration" class="block text-sm font-semibold text-slate-700 mb-2">مدة الذاكرة المؤقتة (الكاش) للملفات والمجلدات</label>
+                            <select name="cache_duration" id="cache_duration" 
+                                class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none transition duration-200 text-sm">
+                                <option value="0" {{ ($settings->cache_duration ?? 5) == 0 ? 'selected' : '' }}>تعطيل الكاش (لا ينصح به تحت الضغط العالي)</option>
+                                <option value="1" {{ ($settings->cache_duration ?? 5) == 1 ? 'selected' : '' }}>دقيقة واحدة (تحديث مستمر)</option>
+                                <option value="5" {{ ($settings->cache_duration ?? 5) == 5 ? 'selected' : '' }}>5 دقائق (مستحسن للأداء العالي والشبكات)</option>
+                                <option value="10" {{ ($settings->cache_duration ?? 5) == 10 ? 'selected' : '' }}>10 دقائق</option>
+                                <option value="30" {{ ($settings->cache_duration ?? 5) == 30 ? 'selected' : '' }}>30 دقيقة</option>
+                                <option value="60" {{ ($settings->cache_duration ?? 5) == 60 ? 'selected' : '' }}>ساعة كاملة</option>
+                            </select>
+                            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                                تفعيل الكاش يخفف عمليات مسح القرص الصلب للسيرفر، حيث يقرأ البيانات من الذاكرة المؤقتة ويريح السيرفر تماماً.
+                            </p>
+                        </div>
+
+                        <!-- طريقة بث الملفات -->
+                        <div>
+                            <label for="file_serving_mode" class="block text-sm font-semibold text-slate-700 mb-2">طريقة تشغيل وتحميل الملفات (File Serving Method)</label>
+                            <select name="file_serving_mode" id="file_serving_mode" 
+                                class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none transition duration-200 text-sm">
+                                <option value="php" {{ ($settings->file_serving_mode ?? 'php') == 'php' ? 'selected' : '' }}>البث الافتراضي عبر PHP (Standard PHP)</option>
+                                <option value="x_sendfile" {{ ($settings->file_serving_mode ?? 'php') == 'x_sendfile' ? 'selected' : '' }}>تحميل مسرّع عبر Apache X-Sendfile (ينصح به مع Laragon)</option>
+                                <option value="x_accel_redirect" {{ ($settings->file_serving_mode ?? 'php') == 'x_accel_redirect' ? 'selected' : '' }}>تحميل مسرّع عبر Nginx X-Accel-Redirect</option>
+                            </select>
+                            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                                هذه التقنية تحرر ذاكرة السيرفر فوراً عند تحميل الطلاب للملفات الكبيرة (كالمحاضرات) وتقي السيرفر من الانهيار.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- مسار Nginx الداخلي -->
+                    <div id="nginx_path_group" class="{{ ($settings->file_serving_mode ?? 'php') == 'x_accel_redirect' ? '' : 'hidden' }} space-y-2">
+                        <label for="nginx_internal_path" class="block text-sm font-semibold text-slate-700">المسار الداخلي الافتراضي لـ Nginx (Internal URI)</label>
+                        <input type="text" name="nginx_internal_path" id="nginx_internal_path" value="{{ $settings->nginx_internal_path ?? '/protected-files' }}"
+                            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none transition duration-200 text-sm font-mono">
+                        <p class="text-xs text-slate-400">
+                            يجب أن يتطابق مع المسار الداخلي المهيأ في ملف إعدادات خادم Nginx.
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <!-- ================= القسم السفلي (تخصيص الألوان والمعاينة متقابلان) ================= -->
@@ -605,6 +663,19 @@
             });
 
             // تم نقل إدارة الأقسام لصفحة مستقلة
+
+            // File Serving Mode Nginx settings toggle
+            const fileServingModeSelect = document.getElementById('file_serving_mode');
+            const nginxPathGroup = document.getElementById('nginx_path_group');
+            if (fileServingModeSelect && nginxPathGroup) {
+                fileServingModeSelect.addEventListener('change', function() {
+                    if (this.value === 'x_accel_redirect') {
+                        nginxPathGroup.classList.remove('hidden');
+                    } else {
+                        nginxPathGroup.classList.add('hidden');
+                    }
+                });
+            }
 
             // Initial trigger
             updateColors();

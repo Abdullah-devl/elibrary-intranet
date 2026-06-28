@@ -50,7 +50,15 @@
                 @endif
                 <span>{{ $settings->name }}</span>
             </a>
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3 sm:gap-4">
+                @if(session('admin_authenticated'))
+                    <a href="{{ request()->fullUrlWithQuery(['refresh' => 1]) }}" 
+                       class="bg-accent hover:opacity-90 text-white text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition font-bold shadow-sm" 
+                       title="تحديث ملفات المجلد الحالي (تفريغ الكاش)">
+                        <i class="fa-solid fa-rotate text-sm"></i>
+                        <span class="hidden md:inline">تحديث قائمة الملفات</span>
+                    </a>
+                @endif
                 <span class="text-sm text-slate-300 flex items-center gap-1.5"><i class="fa-solid fa-wifi text-green-400"></i> <span class="hidden sm:inline">متصل بالشبكة المحلية</span></span>
                 <a href="{{ route('settings.index') }}" class="hover:text-accent text-slate-200 transition duration-300" title="الإعدادات">
                     <i class="fa-solid fa-gear text-lg"></i>

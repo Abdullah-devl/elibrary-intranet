@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Cache;
 
 class LibraryController extends Controller
 {
@@ -75,7 +76,38 @@ class LibraryController extends Controller
         // 5. دمج المسار الأساسي مع المجلد الحالي
         $fullPath = empty($currentFolder) ? $basePath : $basePath . '/' . $currentFolder;
 
-        // التحقق من وجود المجلد المطلوب تصفحه
+        // 6. التحقق من وجود المجلد المطلوب تصفحه وجلب محتوياته مع دعم التخزين المؤقت (Cache)
+        $folders = [];
+        $files = [];
+
+        $cacheDuration = (int) ($settings['cache_duration'] ?? 5);
+        $cacheKey = "library_scan:" . md5($type . '|' . $currentFolder);
+
+        // إذا طلب المشرف تحديث الذاكرة المؤقتة بشكل صريح
+        if ($request->query('refresh') && session('admin_authenticated')) {
+            Cache::forget($cacheKey);
+        }
+
+        if ($cacheDuration > 0) {
+            $cachedData = Cache::remember($cacheKey, $cacheDuration * 60, function () use ($fullPath, $currentCategory) {
+                return $this->scanDirectoryContents($fullPath, $currentCategory);
+            });
+            $folders = $cachedData['folders'];
+            $files = $cachedData['files'];
+        } else {
+            $data = $this->scanDirectoryContents($fullPath, $currentCategory);
+            $folders = $data['folders'];
+            $files = $data['files'];
+        }
+
+        return view('welcome', compact('folders', 'files', 'currentFolder', 'type', 'currentCategory'));
+    }
+
+    /**
+     * قراءة محتويات المجلد الفعلي من القرص (المجلدات والملفات المسموحة)
+     */
+    private function scanDirectoryContents($fullPath, $currentCategory)
+    {
         $folders = [];
         $files = [];
 
@@ -88,7 +120,6 @@ class LibraryController extends Controller
             $allFiles = File::files($fullPath);
             
             $allowedExtensions = $currentCategory['extensions'] ?? [];
-            // تحويل الامتدادات إلى أحرف صغيرة للمقارنة الصحيحة
             $allowedExtensions = array_map('strtolower', $allowedExtensions);
 
             foreach ($allFiles as $file) {
@@ -105,7 +136,10 @@ class LibraryController extends Controller
             }
         }
 
-        return view('welcome', compact('folders', 'files', 'currentFolder', 'type', 'currentCategory'));
+        return [
+            'folders' => $folders,
+            'files' => $files
+        ];
     }
 
     /**
@@ -173,9 +207,40 @@ class LibraryController extends Controller
 
         // تقديم الفيديو والـ PDF والـ TXT والصور للعرض، وباقي الصيغ للتحميل
         $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'bmp', 'ico'];
-        if (($currentCategory['layout'] ?? '') === 'video' || 
+        $isInline = (($currentCategory['layout'] ?? '') === 'video' || 
             in_array($extension, ['pdf', 'txt']) || 
-            in_array($extension, $imageExtensions)) {
+            in_array($extension, $imageExtensions));
+
+        $fileServingMode = $settings['file_serving_mode'] ?? 'php';
+        $nginxInternalPath = $settings['nginx_internal_path'] ?? '/protected-files';
+
+        if ($fileServingMode !== 'php') {
+            $fileName = basename($fullPath);
+            $encodedFileName = rawurlencode($fileName);
+            $disposition = $isInline ? 'inline' : 'attachment';
+            $mimeType = File::mimeType($fullPath) ?: 'application/octet-stream';
+
+            $headers = [
+                'Content-Type' => $mimeType,
+                'Content-Disposition' => "$disposition; filename=\"$fileName\"; filename*=UTF-8''$encodedFileName",
+            ];
+
+            if ($fileServingMode === 'x_sendfile') {
+                return response('', 200)->withHeaders(array_merge($headers, [
+                    'X-Sendfile' => $fullPath
+                ]));
+            }
+
+            if ($fileServingMode === 'x_accel_redirect') {
+                // Nginx requires URI path (e.g. /protected-files/videos/folder/file.mp4)
+                $redirectUri = rtrim($nginxInternalPath, '/') . '/' . $type . '/' . $file;
+                return response('', 200)->withHeaders(array_merge($headers, [
+                    'X-Accel-Redirect' => $redirectUri
+                ]));
+            }
+        }
+
+        if ($isInline) {
             return response()->file($fullPath);
         } else {
             return response()->download($fullPath);
