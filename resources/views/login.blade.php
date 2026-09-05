@@ -32,9 +32,10 @@
         }
     </style>
 </head>
-<body class="text-slate-800 antialiased min-h-screen flex items-center justify-center p-4">
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
 
-    <div class="w-full max-w-md bg-white/95 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-white/20">
+    <div class="flex-1 flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white/95 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-white/20">
         
         <!-- Header -->
         <div class="text-center mb-8">
@@ -95,7 +96,9 @@
             </a>
         </div>
 
+        </div>
     </div>
 
+    @include('components.footer')
 </body>
 </html>

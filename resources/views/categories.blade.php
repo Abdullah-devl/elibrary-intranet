@@ -517,5 +517,6 @@
             btnCancelModal.addEventListener('click', closeModal);
         });
     </script>
+    @include('components.footer')
 </body>
 </html>

@@ -116,19 +116,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="w-full py-6 bg-slate-900 text-slate-400 text-xs">
-        <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div>
-                جميع الحقوق محفوظة للمكتبة المحلية &copy; {{ date('Y') }} - <span class="font-bold text-white">{{ $settings->name }}</span>
-            </div>
-            <div class="flex items-center gap-4">
-                <a href="{{ route('settings.index') }}" class="hover:text-accent flex items-center gap-1.5 transition duration-300" title="إعدادات المشرف">
-                    <i class="fa-solid fa-gear"></i>
-                    <span>لوحة التحكم</span>
-                </a>
-            </div>
-        </div>
-    </footer>
+    @include('components.footer')
 
 </body>
 </html>
