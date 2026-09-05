@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use App\Models\ActivityLog;
 
 class SettingsController extends Controller
 {
@@ -82,11 +84,41 @@ class SettingsController extends Controller
         // قراءة حالة الأقسام ديناميكياً
         $categories = $settings['categories'] ?? [];
         $pathsStatus = [];
+        $categoryNames = [];
         foreach ($categories as $cat) {
             $pathsStatus[$cat['id']] = File::exists($cat['path'] ?? '');
+            $categoryNames[$cat['id']] = $cat['name'] ?? $cat['id'];
         }
 
-        return view('settings', compact('pathsStatus'));
+        // جلب الإحصائيات العامة
+        $totalVisits = ActivityLog::where('log_type', 'visit')->count();
+        $totalDownloads = ActivityLog::where('log_type', 'download')->count();
+        $totalCopies = ActivityLog::where('log_type', 'copy_to_drive')->count();
+
+        // أكثر الملفات تحميلاً وتشغيلاً (التحميل + النسخ)
+        $topDownloads = ActivityLog::whereIn('log_type', ['download', 'copy_to_drive'])
+            ->select('file_path', 'file_name', 'category_id', DB::raw('count(*) as total_count'))
+            ->groupBy('file_path', 'file_name', 'category_id')
+            ->orderByDesc('total_count')
+            ->limit(10)
+            ->get();
+
+        // الزيارات حسب الأقسام
+        $visitsByCategory = ActivityLog::where('log_type', 'visit')
+            ->select('category_id', DB::raw('count(*) as total_visits'))
+            ->groupBy('category_id')
+            ->orderByDesc('total_visits')
+            ->get();
+
+        return view('settings', compact(
+            'pathsStatus',
+            'totalVisits',
+            'totalDownloads',
+            'totalCopies',
+            'topDownloads',
+            'visitsByCategory',
+            'categoryNames'
+        ));
     }
 
     /**
@@ -103,6 +135,9 @@ class SettingsController extends Controller
             'logo_type' => 'required|in:icon,image',
             'logo_icon' => 'nullable|string|max:50',
             'logo_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'org_logo_type' => 'required|in:icon,image',
+            'org_logo_icon' => 'nullable|string|max:50',
+            'org_logo_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'color_primary' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'color_accent' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'color_bglight' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
@@ -145,6 +180,8 @@ class SettingsController extends Controller
         $settings['name'] = $request->input('name');
         $settings['logo_type'] = $request->input('logo_type');
         $settings['logo_icon'] = $request->input('logo_icon') ?: 'fa-solid fa-graduation-cap';
+        $settings['org_logo_type'] = $request->input('org_logo_type');
+        $settings['org_logo_icon'] = $request->input('org_logo_icon') ?: 'fa-solid fa-building';
         $settings['color_primary'] = $request->input('color_primary');
         $settings['color_accent'] = $request->input('color_accent');
         $settings['color_bglight'] = $request->input('color_bglight');
@@ -179,6 +216,25 @@ class SettingsController extends Controller
             $filename = 'logo_' . time() . '.' . $file->getClientOriginalExtension();
             $file->move($uploadPath, $filename);
             $settings['logo_path'] = 'uploads/' . $filename;
+        }
+
+        if ($request->hasFile('org_logo_file')) {
+            $file = $request->file('org_logo_file');
+            $uploadPath = public_path('uploads');
+            if (!File::exists($uploadPath)) {
+                File::makeDirectory($uploadPath, 0755, true);
+            }
+
+            if (!empty($settings['org_logo_path'])) {
+                $oldLogoPath = public_path($settings['org_logo_path']);
+                if (File::exists($oldLogoPath)) {
+                    File::delete($oldLogoPath);
+                }
+            }
+
+            $filename = 'org_logo_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move($uploadPath, $filename);
+            $settings['org_logo_path'] = 'uploads/' . $filename;
         }
 
         // حفظ ملف الإعدادات

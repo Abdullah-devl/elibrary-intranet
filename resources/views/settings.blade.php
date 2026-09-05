@@ -83,6 +83,136 @@
             </div>
         @endif
 
+        <!-- لوحة الإحصائيات العامة للمكتبة -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 mb-8 space-y-6">
+            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-4">
+                <i class="fa-solid fa-chart-pie text-accent"></i>
+                إحصائيات المكتبة الإلكترونية
+            </h2>
+
+            <!-- بطاقات الإحصائيات -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- بطاقة الزيارات -->
+                <div class="bg-gradient-to-br from-indigo-50 to-indigo-100/50 border border-indigo-100 rounded-2xl p-6 flex items-center justify-between shadow-sm hover:shadow transition duration-200">
+                    <div class="space-y-1">
+                        <span class="text-xs font-bold text-indigo-500 uppercase tracking-wider">إجمالي الزيارات</span>
+                        <h3 class="text-3xl font-extrabold text-indigo-900">{{ number_format($totalVisits ?? 0) }}</h3>
+                        <p class="text-xs text-indigo-600/80 font-semibold">إجمالي مرات فتح وتصفح أقسام المكتبة</p>
+                    </div>
+                    <div class="bg-indigo-500 text-white w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-md shadow-indigo-500/20">
+                        <i class="fa-solid fa-eye"></i>
+                    </div>
+                </div>
+
+                <!-- بطاقة التحميلات والمشاهدات -->
+                <div class="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-100 rounded-2xl p-6 flex items-center justify-between shadow-sm hover:shadow transition duration-200">
+                    <div class="space-y-1">
+                        <span class="text-xs font-bold text-emerald-600 uppercase tracking-wider">التحميلات والمشاهدات</span>
+                        <h3 class="text-3xl font-extrabold text-emerald-900">{{ number_format($totalDownloads ?? 0) }}</h3>
+                        <p class="text-xs text-emerald-600/80 font-semibold">إجمالي تشغيل الملفات أو تنزيلها مباشرة</p>
+                    </div>
+                    <div class="bg-emerald-500 text-white w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-md shadow-emerald-500/20">
+                        <i class="fa-solid fa-download"></i>
+                    </div>
+                </div>
+
+                <!-- بطاقة النسخ للفلاش ميموري -->
+                <div class="bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-100 rounded-2xl p-6 flex items-center justify-between shadow-sm hover:shadow transition duration-200">
+                    <div class="space-y-1">
+                        <span class="text-xs font-bold text-amber-600 uppercase tracking-wider">النسخ للفلاش ميموري</span>
+                        <h3 class="text-3xl font-extrabold text-amber-900">{{ number_format($totalCopies ?? 0) }}</h3>
+                        <p class="text-xs text-amber-600/80 font-semibold">إجمالي الملفات المنسوخة مباشرة للفلاش</p>
+                    </div>
+                    <div class="bg-amber-500 text-white w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-md shadow-amber-500/20">
+                        <i class="fa-solid fa-copy"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- جداول الإحصائيات التفصيلية -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
+                <!-- جدول الأكثر تحميلاً -->
+                <div class="lg:col-span-2 space-y-3">
+                    <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-fire text-rose-500"></i>
+                        أعلى 10 ملفات طلباً (تحميل ومشاهدة ونسخ للفلاش)
+                    </h3>
+                    <div class="bg-white border border-slate-100 rounded-xl overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs">
+                                <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-100">
+                                    <tr>
+                                        <th class="py-3 px-4 w-12 text-center">#</th>
+                                        <th class="py-3 px-4">اسم الملف</th>
+                                        <th class="py-3 px-4">القسم</th>
+                                        <th class="py-3 px-4 text-center">عدد الطلبات</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-slate-700">
+                                    @forelse($topDownloads ?? [] as $index => $item)
+                                        <tr class="hover:bg-slate-50/50 transition">
+                                            <td class="py-3 px-4 text-center font-bold text-slate-400">{{ $index + 1 }}</td>
+                                            <td class="py-3 px-4 font-semibold text-slate-800 max-w-xs truncate" title="{{ $item->file_name }}">
+                                                {{ $item->file_name }}
+                                            </td>
+                                            <td class="py-3 px-4">
+                                                <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
+                                                    {{ $categoryNames[$item->category_id] ?? $item->category_id }}
+                                                </span>
+                                            </td>
+                                            <td class="py-3 px-4 text-center font-bold text-accent">{{ number_format($item->total_count) }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="py-8 text-center text-slate-400 font-semibold">
+                                                <i class="fa-solid fa-inbox text-2xl mb-2 block"></i>
+                                                لا توجد بيانات تحميلات مسجلة بعد.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- جدول إحصائيات الأقسام -->
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-bar text-indigo-500"></i>
+                        الزيارات حسب الأقسام
+                    </h3>
+                    <div class="bg-white border border-slate-100 rounded-xl overflow-hidden shadow-sm">
+                        <table class="w-full text-right text-xs">
+                            <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-100">
+                                <tr>
+                                    <th class="py-3 px-4">القسم</th>
+                                    <th class="py-3 px-4 text-center">الزيارات</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-700">
+                                @forelse($visitsByCategory ?? [] as $item)
+                                    <tr class="hover:bg-slate-50/50 transition">
+                                        <td class="py-3 px-4 font-semibold text-slate-800">
+                                            {{ $categoryNames[$item->category_id] ?? $item->category_id }}
+                                        </td>
+                                        <td class="py-3 px-4 text-center font-bold text-indigo-600">{{ number_format($item->total_visits) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="2" class="py-8 text-center text-slate-400 font-semibold">
+                                            <i class="fa-solid fa-inbox text-2xl mb-2 block"></i>
+                                            لا توجد بيانات زيارات مسجلة بعد.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <form action="{{ route('settings.update') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
             @csrf
 
@@ -167,6 +297,54 @@
                                     <input type="password" name="new_password_confirmation" id="new_password_confirmation" autocomplete="new-password" placeholder="••••••••"
                                         class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none text-xs transition duration-200 font-mono">
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- شعار الجهة / المؤسسة -->
+                    <div class="bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
+                        <h3 class="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-building text-accent"></i> شعار الجهة (للصفحة الترحيبية الرئيسية)
+                        </h3>
+
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <label class="border-2 border-slate-200 rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:border-accent transition duration-200">
+                                <input type="radio" name="org_logo_type" value="icon" class="text-accent focus:ring-accent" {{ ($settings->org_logo_type ?? 'icon') == 'icon' ? 'checked' : '' }} onchange="toggleOrgLogo(this.value)">
+                                <div>
+                                    <div class="font-bold text-sm text-slate-700">أيقونة جاهزة</div>
+                                    <div class="text-xs text-slate-400">اختر رمز FontAwesome</div>
+                                </div>
+                            </label>
+                            
+                            <label class="border-2 border-slate-200 rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:border-accent transition duration-200">
+                                <input type="radio" name="org_logo_type" value="image" class="text-accent focus:ring-accent" {{ ($settings->org_logo_type ?? 'icon') == 'image' ? 'checked' : '' }} onchange="toggleOrgLogo(this.value)">
+                                <div>
+                                    <div class="font-bold text-sm text-slate-700">صورة مخصصة</div>
+                                    <div class="text-xs text-slate-400">ارفع شعار خاص بالجهة</div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Icon Input -->
+                        <div id="org-icon-input-group" class="{{ ($settings->org_logo_type ?? 'icon') == 'image' ? 'hidden' : '' }} space-y-3">
+                            <label for="org_logo_icon" class="block text-sm font-semibold text-slate-700">رمز الأيقونة (FontAwesome class)</label>
+                            <div class="relative">
+                                <input type="text" name="org_logo_icon" id="org_logo_icon" value="{{ $settings->org_logo_icon ?? 'fa-solid fa-building' }}"
+                                    class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-accent/50 focus:border-accent outline-none transition duration-200">
+                                <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">
+                                    <i id="org-logo-icon-indicator" class="{{ $settings->org_logo_icon ?? 'fa-solid fa-building' }}"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Image Input -->
+                        <div id="org-image-input-group" class="{{ ($settings->org_logo_type ?? 'icon') == 'icon' ? 'hidden' : '' }} space-y-3">
+                            <label class="block text-sm font-semibold text-slate-700">ملف الشعار (صورة)</label>
+                            <div class="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-accent transition duration-200 relative cursor-pointer">
+                                <input type="file" name="org_logo_file" id="org_logo_file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer">
+                                <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 mb-2"></i>
+                                <p class="text-sm font-semibold text-slate-600">اضغط لرفع ملف أو اسحبه هنا</p>
+                                <p class="text-xs text-slate-400 mt-1">يدعم PNG, JPG, SVG</p>
                             </div>
                         </div>
                     </div>
@@ -493,7 +671,23 @@
     </main>
 
     <script>
+        function toggleOrgLogo(val) {
+            const iconGroup = document.getElementById('org-icon-input-group');
+            const imageGroup = document.getElementById('org-image-input-group');
+            if(val === 'icon') {
+                iconGroup.classList.remove('hidden');
+                imageGroup.classList.add('hidden');
+            } else {
+                iconGroup.classList.add('hidden');
+                imageGroup.classList.remove('hidden');
+            }
+        }
+        
         document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('org_logo_icon').addEventListener('input', function() {
+                document.getElementById('org-logo-icon-indicator').className = this.value;
+            });
+
             // Elements
             const nameInput = document.getElementById('name');
             const logoTypeRadios = document.querySelectorAll('input[name="logo_type"]');

@@ -55,10 +55,10 @@
     <!-- Header / Nav (مبسط) -->
     <header class="w-full max-w-7xl mx-auto px-6 py-5 flex justify-between items-center z-10">
         <div class="text-xl font-bold flex items-center gap-3 truncate max-w-[60%]">
-            @if($settings->logo_type === 'image' && $settings->logo_path)
-                <img src="{{ asset($settings->logo_path) }}" alt="Logo" class="h-9 w-auto object-contain flex-shrink-0">
+            @if(($settings->org_logo_type ?? 'icon') === 'image' && !empty($settings->org_logo_path))
+                <img src="{{ asset($settings->org_logo_path) }}" alt="Organization Logo" class="h-9 w-auto object-contain flex-shrink-0">
             @else
-                <i class="{{ $settings->logo_icon }} text-primary text-2xl flex-shrink-0"></i>
+                <i class="{{ $settings->org_logo_icon ?? 'fa-solid fa-building' }} text-primary text-2xl flex-shrink-0"></i>
             @endif
             <span class="text-slate-800 font-extrabold truncate">{{ $settings->name }}</span>
         </div>

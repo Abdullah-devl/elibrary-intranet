@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Cache;
+use App\Models\ActivityLog;
 
 class LibraryController extends Controller
 {
@@ -98,6 +99,15 @@ class LibraryController extends Controller
             $data = $this->scanDirectoryContents($fullPath, $currentCategory);
             $folders = $data['folders'];
             $files = $data['files'];
+        }
+
+        // تسجيل الزيارة للقسم في حال لم يكن المشرف هو المتصفح
+        if (!session('admin_authenticated')) {
+            ActivityLog::create([
+                'log_type' => 'visit',
+                'category_id' => $type,
+                'ip_address' => $request->ip(),
+            ]);
         }
 
         return view('welcome', compact('folders', 'files', 'currentFolder', 'type', 'currentCategory'));
@@ -203,6 +213,17 @@ class LibraryController extends Controller
 
         if (!in_array($extension, $allowedExtensions)) {
             abort(403, 'صيغة الملف غير مصرح بها.');
+        }
+
+        // تسجيل عملية التحميل/التشغيل للملف
+        if (!session('admin_authenticated')) {
+            ActivityLog::create([
+                'log_type' => 'download',
+                'category_id' => $type,
+                'file_path' => $file,
+                'file_name' => basename($fullPath),
+                'ip_address' => $request->ip(),
+            ]);
         }
 
         // تقديم الفيديو والـ PDF والـ TXT والصور للعرض، وباقي الصيغ للتحميل
@@ -424,6 +445,17 @@ class LibraryController extends Controller
 
         try {
             if (copy($fullPath, $destinationPath)) {
+                // تسجيل عملية النسخ الناجحة للفلاش ميموري
+                if (!session('admin_authenticated')) {
+                    ActivityLog::create([
+                        'log_type' => 'copy_to_drive',
+                        'category_id' => $type,
+                        'file_path' => $file,
+                        'file_name' => $fileName,
+                        'ip_address' => $request->ip(),
+                    ]);
+                }
+
                 return response()->json([
                     'success' => true,
                     'message' => "تم نسخ الملف بنجاح إلى الفلاش ميموري ({$destinationPath})."

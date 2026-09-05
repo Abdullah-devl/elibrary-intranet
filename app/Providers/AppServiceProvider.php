@@ -25,6 +25,9 @@ class AppServiceProvider extends ServiceProvider
             'logo_type' => 'icon', // 'icon' or 'image'
             'logo_icon' => 'fa-solid fa-graduation-cap',
             'logo_path' => '',
+            'org_logo_type' => 'icon',
+            'org_logo_icon' => 'fa-solid fa-building',
+            'org_logo_path' => '',
             'color_primary' => '#1E293B',
             'color_accent' => '#D97706',
             'color_bglight' => '#F8FAFC',
