@@ -1,0 +1,26 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: elibrary-app
+    container_name: elibrary_app
+    ports:
+      # تم تغييره إلى 80 لكي يدخل المستخدمون عبر IP السيرفر مباشرة بدون كتابة منفذ
+      - "80:80" 
+    env_file:
+      - .env
+    environment:
+      # إعدادات بيئة الإنتاج للسيرفر
+      - APP_ENV=production
+      - APP_DEBUG=false
+    volumes:
+      # تم حذف ربط ملفات المشروع ليكون النظام معزولاً وآمناً (يعتمد على الصورة المبنية)
+      # تم إضافة هذه المجلدات للحفاظ على البيانات عند إعادة تشغيل أو تحديث السيرفر
+      - elibrary_storage:/var/www/html/storage
+      - elibrary_database:/var/www/html/database
+    restart: always # سيعمل تلقائياً إذا أعيد تشغيل السيرفر
+
+volumes:
+  elibrary_storage:
+  elibrary_database:
