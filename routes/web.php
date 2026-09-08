@@ -17,17 +17,22 @@ Route::get('/serve-file', [LibraryController::class, 'serveFile'])->name('file.s
 
 // مسارات كشف الأقراص والنسخ المباشر للفلاش ميموري
 Route::get('/library/detect-drives', [LibraryController::class, 'detectDrives'])->name('library.detect_drives');
-Route::post('/library/copy-to-drive', [LibraryController::class, 'copyToDrive'])->name('library.copy_to_drive');
+// حماية مسار النسخ للفلاش من ثغرة DoS بتحديد 60 طلب في الدقيقة
+Route::post('/library/copy-to-drive', [LibraryController::class, 'copyToDrive'])->middleware('throttle:60,1')->name('library.copy_to_drive');
 
 // مسارات صفحة الإعدادات والحماية
 Route::get('/settings/login', [SettingsController::class, 'showLogin'])->name('settings.login');
-Route::post('/settings/login', [SettingsController::class, 'login'])->name('settings.login_submit');
+// تطبيق قيد على المحاولات (5 محاولات في الدقيقة) لمنع هجمات القوة الغاشمة (Brute Force)
+Route::post('/settings/login', [SettingsController::class, 'login'])->middleware('throttle:5,1')->name('settings.login_submit');
 Route::post('/settings/logout', [SettingsController::class, 'logout'])->name('settings.logout');
 
-Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
-Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
+// حماية جميع مسارات الإعدادات باستخدام الـ Middleware الأمني الجديد (admin.auth)
+Route::middleware(['admin.auth'])->group(function () {
+    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+    Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
 
-// مسارات إدارة الأقسام ديناميكياً
-Route::get('/settings/categories', [SettingsController::class, 'categoriesIndex'])->name('settings.categories.index');
-Route::post('/settings/categories/save', [SettingsController::class, 'categoriesSave'])->name('settings.categories.save');
-Route::post('/settings/categories/delete', [SettingsController::class, 'categoriesDelete'])->name('settings.categories.delete');
+    // مسارات إدارة الأقسام ديناميكياً
+    Route::get('/settings/categories', [SettingsController::class, 'categoriesIndex'])->name('settings.categories.index');
+    Route::post('/settings/categories/save', [SettingsController::class, 'categoriesSave'])->name('settings.categories.save');
+    Route::post('/settings/categories/delete', [SettingsController::class, 'categoriesDelete'])->name('settings.categories.delete');
+});

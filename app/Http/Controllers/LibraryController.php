@@ -70,9 +70,14 @@ class LibraryController extends Controller
         // 4. معرفة المجلد الحالي المطلوب تصفحه
         $currentFolder = $request->query('folder', '');
         
-        // تنظيف مسار المجلد الحالي لحماية النظام من التنقل خارج المسار المسموح به
-        $currentFolder = str_replace(['..', '\\'], ['', '/'], $currentFolder);
-        $currentFolder = trim($currentFolder, '/');
+        // حماية صارمة بـ Regex لمنع التنقل خارج المسار المسموح به (Directory Traversal)
+        // السماح فقط بالحروف والأرقام والشرطات والمسافات
+        if (!empty($currentFolder) && !preg_match('/^[a-zA-Z0-9_\-\s]+$/', basename($currentFolder))) {
+            abort(403, 'اسم المجلد يحتوي على رموز غير مسموحة.');
+        }
+
+        $currentFolder = str_replace(['..', '\\', '/'], '', $currentFolder);
+        $currentFolder = trim($currentFolder);
 
         // 5. دمج المسار الأساسي مع المجلد الحالي
         $fullPath = empty($currentFolder) ? $basePath : $basePath . '/' . $currentFolder;
@@ -164,8 +169,12 @@ class LibraryController extends Controller
             abort(400, 'اسم الملف مطلوب.');
         }
 
-        // تنظيف المعامل لمنع الهجمات
-        $file = str_replace(['..', '\\'], ['', '/'], $file);
+        // تنظيف المعامل وحماية صارمة بـ Regex لمنع هجمات Directory Traversal و Null Byte Injection
+        if (strpos($file, "\0") !== false || preg_match('/\.\.+/', $file)) {
+            abort(403, 'اسم الملف غير صالح.');
+        }
+
+        $file = str_replace(['..', '\\', "\0"], ['', '/', ''], $file);
         $file = trim($file, '/');
 
         $settingsPath = storage_path('app/settings.json');
@@ -363,7 +372,14 @@ class LibraryController extends Controller
         }
 
         // 2. تنظيف مسار الملف وجلب إعدادات القسم للتحقق الأمني
-        $file = str_replace(['..', '\\'], ['', '/'], $file);
+        if (strpos($file, "\0") !== false || preg_match('/\.\.+/', $file)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'اسم الملف غير صالح ويحتوي على رموز ممنوعة.'
+            ], 403);
+        }
+
+        $file = str_replace(['..', '\\', "\0"], ['', '/', ''], $file);
         $file = trim($file, '/');
 
         $settingsPath = storage_path('app/settings.json');

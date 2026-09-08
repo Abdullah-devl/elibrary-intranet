@@ -71,10 +71,6 @@ class SettingsController extends Controller
      */
     public function index()
     {
-        if (!session('admin_authenticated')) {
-            return redirect()->route('settings.login');
-        }
-
         $settingsPath = storage_path('app/settings.json');
         $settings = [];
         if (File::exists($settingsPath)) {
@@ -126,10 +122,6 @@ class SettingsController extends Controller
      */
     public function update(Request $request)
     {
-        if (!session('admin_authenticated')) {
-            return redirect()->route('settings.login');
-        }
-
         $request->validate([
             'name' => 'required|string|max:100',
             'logo_type' => 'required|in:icon,image',
@@ -252,10 +244,6 @@ class SettingsController extends Controller
      */
     public function categoriesIndex()
     {
-        if (!session('admin_authenticated')) {
-            return redirect()->route('settings.login');
-        }
-
         $settingsPath = storage_path('app/settings.json');
         $settings = [];
         if (File::exists($settingsPath)) {
@@ -285,10 +273,6 @@ class SettingsController extends Controller
      */
     public function categoriesSave(Request $request)
     {
-        if (!session('admin_authenticated')) {
-            return redirect()->route('settings.login');
-        }
-
         $request->validate([
             'id' => 'required|string|alpha_dash|max:50',
             'name' => 'required|string|max:100',
@@ -427,10 +411,6 @@ class SettingsController extends Controller
      */
     public function categoriesDelete(Request $request)
     {
-        if (!session('admin_authenticated')) {
-            return redirect()->route('settings.login');
-        }
-
         $request->validate([
             'id' => 'required|string|max:50',
         ]);
